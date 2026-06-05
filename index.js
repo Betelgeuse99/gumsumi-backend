@@ -18,7 +18,6 @@ app.use((req, res, next) => {
 });
 
 process.env.TZ = 'Africa/Lagos';
-require('dotenv').config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -629,7 +628,7 @@ app.get('/monnify-callback', (req, res) => {
           clearInterval(timer);
           countdownEl.textContent = '✓';
           statusEl.textContent = 'Redirecting to your credentials...';
-          window.location.href = '/success?reference=' + encodeURIComponent('${ref}');
+         window.location.href = '/success?reference=' + encodeURIComponent(decodeURIComponent("${encodeURIComponent(ref)}"));
         }
       }, 1000);
     </script>
@@ -1013,29 +1012,46 @@ app.get('/success', async (req, res) => {
   }
 });
 
-// ========== SIMPLE STATUS CHECK ==========
+// ========== FULL & RESTORED STATUS CHECK ENDPOINT ==========
 app.get('/api/check-status', async (req, res) => {
   try {
     const { ref } = req.query;
-    if (!ref) return res.json({ ready: false, message: 'No reference provided' });
-    const result = await pool.query(`
-      SELECT mikrotik_username, mikrotik_password, plan, status, mac_address, expires_at
-      FROM payment_queue WHERE transaction_id = $1 LIMIT 1`, [ref]);
-    if (result.rows.length > 0) {
-      const user = result.rows[0];
-      if (user.status === 'processed') {
-        return res.json({ ready: true, username: user.mikrotik_username, password: user.mikrotik_password,
-          plan: user.plan, expires_at: user.expires_at, message: 'Credentials ready' });
-      } else {
-        return res.json({ ready: false, status: user.status, expires_at: user.expires_at,
-          message: 'Status: ' + user.status + ' - Please wait...' });
-      }
-    } else {
-      return res.json({ ready: false, message: 'Payment not found. Please wait...' });
+    if (!ref) return res.status(400).json({ error: 'Missing payment reference parameter.' });
+
+    const result = await pool.query(
+      `SELECT status, mikrotik_username, mikrotik_password, plan, expires_at 
+       FROM payment_queue 
+       WHERE transaction_id = $1 
+       LIMIT 1`,
+      [ref]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({ ready: false, status: 'not_found', message: 'Transaction record not found yet.' });
     }
+
+    const row = result.rows[0];
+    
+    if (row.status === 'processed') {
+      return res.json({
+        ready: true,
+        status: 'processed',
+        username: row.mikrotik_username,
+        password: row.mikrotik_password,
+        plan: row.plan,
+        expires_at: row.expires_at
+      });
+    }
+
+    return res.json({
+      ready: false,
+      status: row.status,
+      message: row.status === 'pending' ? 'Account queued, waiting for synchronization...' : 'Processing payment infrastructure setup...'
+    });
+
   } catch (error) {
-    console.error('Check status error:', error.message);
-    return res.json({ ready: false, error: 'Server error', message: 'Please try again.' });
+    console.error('💥 API Check status system error:', error.message);
+    res.status(500).json({ error: 'Internal system status checking failure.' });
   }
 });
 
