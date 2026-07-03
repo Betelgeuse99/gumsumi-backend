@@ -1,2 +1,2 @@
-# dreamhatcher-backend
-Backend for Dream Hatcher WiFi payment and auto-login integration.
+# gumsumi-backend
+Backend for Gumsumi WiFi payment and auto-login integration.
