@@ -64,7 +64,7 @@ async function getMonnifyToken() {
 }
 
 function keepAlive() {
-  https.get('https://dreamhatcher-backend.onrender.com/health', () => {}).on('error', () => {});
+  https.get('https://gumsumi-backend.onrender.com/health', () => {}).on('error', () => {});
 }
 setInterval(keepAlive, 14 * 60 * 1000);
 
@@ -93,12 +93,12 @@ const initializeMonnifyPayment = async ({ email, amount, plan, mac_address, desc
     {
       amount: amount,
       customerName: 'WiFi Customer',
-      customerEmail: email || 'customer@dreamhatcher.com',
+      customerEmail: email || 'customer@gumsumi.com',
       paymentReference: paymentReference,
-      paymentDescription: description || `Dream Hatcher WiFi - ${plan}`,
+      paymentDescription: description || `Gumsumi International WiFi - ${plan}`,
       currencyCode: 'NGN',
       contractCode: process.env.MONNIFY_CONTRACT_CODE,
-      redirectUrl: 'https://dreamhatcher-backend.onrender.com/monnify-callback',
+      redirectUrl: 'https://gumsumi-backend.onrender.com/monnify-callback',
       paymentMethods: ['CARD', 'ACCOUNT_TRANSFER', 'USSD', 'PHONE_NUMBER'],
       metaData: {
         mac_address: mac_address || 'unknown',
@@ -120,12 +120,12 @@ const initializeMonnifyPayment = async ({ email, amount, plan, mac_address, desc
 };
 
 const planConfig = {
-  daily:   { amount: 350, code: '24hr', duration: '24 Hours' },
-  '3day':  { amount: 1050, code: '3d', duration: '3 Days' },
-  '5day':  { amount: 1750, code: '5d', duration: '5 Days' },
-  weekly:  { amount: 2400, code: '7d', duration: '7 Days' },
-  '2week': { amount: 4100, code: '14d', duration: '14 Days' },
-  monthly: { amount: 7500, code: '30d', duration: '30 Days' }
+  daily:   { amount: 200, code: '24hr', duration: '24 Hours' },
+  '3day':  { amount: 600, code: '3d', duration: '3 Days' },
+  '5day':  { amount: 800, code: '5d', duration: '5 Days' },
+  weekly:  { amount: 1500, code: '7d', duration: '7 Days' },
+  '2week': { amount: 2500, code: '14d', duration: '14 Days' },
+  monthly: { amount: 5000, code: '30d', duration: '30 Days' }
 };
 
 // ========== PAYMENT REDIRECT ==========
@@ -147,7 +147,7 @@ app.get('/pay/:plan', async (req, res) => {
       amount: selectedPlan.amount,
       plan: selectedPlan.code,
       mac_address: mac,
-      description: `Dream Hatcher WiFi - ${selectedPlan.duration}`
+      description: `Gumsumi WiFi - ${selectedPlan.duration}`
     });
 
     console.log(`💵 Payment: ${plan} | MAC: ${mac} | Email: ${email} | Ref: ${paymentReference}`);
@@ -210,12 +210,12 @@ app.post('/api/monnify-webhook', async (req, res) => {
 
     let plan = planFromMetadata;
     if (!plan) {
-      if (amountNaira === 350) plan = '24hr';
-      else if (amountNaira === 1050) plan = '3d';
-      else if (amountNaira === 1750) plan = '5d';
-      else if (amountNaira === 2400) plan = '7d';
-      else if (amountNaira === 4100) plan = '14d';
-      else if (amountNaira === 7500) plan = '30d';
+      if (amountNaira === 200) plan = '24hr';
+      else if (amountNaira === 600) plan = '3d';
+      else if (amountNaira === 800) plan = '5d';
+      else if (amountNaira === 1500) plan = '7d';
+      else if (amountNaira === 2500) plan = '14d';
+      else if (amountNaira === 5000) plan = '30d';
       else {
         console.error('❌ Invalid amount:', amountNaira);
         return res.status(400).json({ error: 'Invalid amount' });
@@ -352,7 +352,7 @@ app.get('/auto-token', (req, res) => {
   const html = `
   <!DOCTYPE html>
   <html>
-  <head><title>Auto Login - Dream Hatcher</title>
+  <head><title>Auto Login - Gumsumi Wifi</title>
   <style>
     body { background: #1a1a2e; color: white; font-family: sans-serif; text-align: center; padding: 50px; }
     .spinner { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #00c9ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 20px auto; }
@@ -364,7 +364,7 @@ app.get('/auto-token', (req, res) => {
     <div class="spinner"></div>
     <div id="status">Checking your saved login...</div>
     <script>
-      const token = localStorage.getItem('dh_token');
+      const token = localStorage.getItem('gic_token');
       if (!token) {
         document.getElementById('status').innerHTML = 'No saved login. <a href="/">Go to portal</a>';
       } else {
@@ -376,7 +376,7 @@ app.get('/auto-token', (req, res) => {
               window.location.href = 'http://192.168.88.1/login?username=' + encodeURIComponent(data.username) + '&password=' + encodeURIComponent(data.password) + '&auto=1';
             } else {
               document.getElementById('status').innerHTML = 'Expired. <a href="/">Portal</a>';
-              localStorage.removeItem('dh_token');
+              localStorage.removeItem('gic_token');
             }
           })
           .catch(() => {
@@ -680,7 +680,7 @@ app.get('/success', async (req, res) => {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Payment Successful - Dream Hatcher</title>
+      <title>Payment Successful - Gumsumi Wifi</title>
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -779,7 +779,7 @@ app.get('/success', async (req, res) => {
     </head>
     <body>
       <div class="container">
-        <div class="logo">🌐 Dream Hatcher Tech</div>
+        <div class="logo">🌐 Gumsumi International Concept</div>
 
         <div id="loading-state">
           <div class="success-icon">✅</div>
@@ -1147,7 +1147,7 @@ app.get('/health', async (req, res) => {
 app.get('/', (req, res) => {
   const html = `<!DOCTYPE html>
   <html>
-  <head><title>Dream Hatcher Tech - WiFi Portal</title>
+  <head><title>Gumsumi International Concept - WiFi Portal</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -1220,18 +1220,18 @@ app.get('/', (req, res) => {
   <body>
     <div class="container">
       <div class="logo">🌐</div>
-      <h1>Dream Hatcher Tech</h1>
+      <h1>Gumsumi International Concept</h1>
       <p>High-Speed Business WiFi Solutions</p>
       <div class="status-badge">✅ SYSTEM OPERATIONAL</div>
       <div class="option-card">
         <h3>📱 Already on our WiFi?</h3>
-        <p>If you're connected to <strong>Dream Hatcher WiFi</strong> network:</p>
+        <p>If you're connected to <strong>Gumsumi WiFi</strong> network:</p>
         <a href="http://192.168.88.1" class="btn">Go to WiFi Login Page</a>
         <p style="margin-top: 10px; font-size: 12px; color: #aaa;">Or enter in browser: <code>192.168.88.1</code></p>
       </div>
       <div class="option-card">
         <h3>💰 Need WiFi Access?</h3>
-        <p>Purchase WiFi packages starting at ₦350/day:</p>
+        <p>Purchase WiFi packages starting at ₦200/day:</p>
         <a href="http://192.168.88.1/hotspotlogin.html" class="btn">View WiFi Plans & Pricing</a>
       </div>
       <div class="option-card">
@@ -1251,7 +1251,7 @@ app.get('/', (req, res) => {
         <p style="font-size: 12px; color: #aaa;">24/7 Customer Support</p>
         <p style="margin-top: 10px; font-size: 12px;">Email: support@dreamhatcher-tech1.xo.je<br>Website: dreamhatcher-tech1.xo.je</p>
       </div>
-      <p style="margin-top: 20px; font-size: 12px; color: #888;">© 2024 Dream Hatcher Tech. All rights reserved.<br>Secure Payment Processing via Monnify</p>
+      <p style="margin-top: 20px; font-size: 12px; color: #888;">© 2026 Gumsumi International Concept. All rights reserved.<br>Secure Payment Processing via Monnify</p>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script>QRCode.toCanvas(document.getElementById('qrcode'), 'http://192.168.88.1', { width: 150, margin: 1, color: { dark: '#000000', light: '#ffffff' } });</script>
@@ -1260,7 +1260,7 @@ app.get('/', (req, res) => {
   res.send(html);
 });
 
-// DREAM HATCHER ENTERPRISE ADMIN DASHBOARD v4.6
+// GUMSUMI INTERNATIONAL ENTERPRISE ADMIN DASHBOARD v1.0
 // Professional WiFi Management System with Role-Based Access Control
 // COLUMN LAYOUT: Username + Email (stacked) | Password | Plan | Status | Created | Expires | MAC Address
 // ============================================
@@ -1268,7 +1268,7 @@ app.get('/', (req, res) => {
 // ========== SECURITY CONFIGURATION ==========
 const ADMIN_USERS = {
     'superadmin': {
-        password: 'dreamatcher@2024',
+        password: 'fugu2026@',
         role: 'super_admin',
         permissions: ['delete', 'create', 'update', 'extend', 'manage_users', 'export', 'force_logout']
     },
@@ -1463,8 +1463,8 @@ app.get('/admin/api/daily', async (req, res) => {
             SELECT 
                 EXTRACT(DAY FROM created_at) as day,
                 SUM(CASE plan
-                    WHEN '24hr' THEN 350 WHEN '3d' THEN 1050 WHEN '5d' THEN 1750
-                    WHEN '7d' THEN 2400 WHEN '14d' THEN 4100 WHEN '30d' THEN 7500 ELSE 0 END
+                    WHEN '24hr' THEN 200 WHEN '3d' THEN 600 WHEN '5d' THEN 800
+                    WHEN '7d' THEN 1500 WHEN '14d' THEN 2500 WHEN '30d' THEN 5000 ELSE 0 END
                 ) as daily_total,
                 COUNT(*) as signups_count
             FROM payment_queue
@@ -1589,7 +1589,7 @@ async function handleAdminDashboard(req, res, sessionId) {
                 csvData += [row.id, '"' + (row.username || '').replace(/"/g, '""') + '"', '"' + (row.password || '').replace(/"/g, '""') + '"', '"' + (row.plan || '').replace(/"/g, '""') + '"', '"' + (row.status || '').replace(/"/g, '""') + '"', '"' + (row.mac || 'N/A').replace(/"/g, '""') + '"', '"' + (row.email || 'N/A').replace(/"/g, '""') + '"', '"' + new Date(row.created_at).toISOString() + '"', '"' + (row.expires_at ? new Date(row.expires_at).toISOString() : 'N/A') + '"', '"' + (row.last_sync ? new Date(row.last_sync).toISOString() : 'N/A') + '"'].join(',') + '\n';
             });
             res.setHeader('Content-Type', 'text/csv');
-            res.setHeader('Content-Disposition', 'attachment; filename="dreamhatcher_users_' + new Date().toISOString().split('T')[0] + '.csv"');
+            res.setHeader('Content-Disposition', 'attachment; filename="gumsumi_users_' + new Date().toISOString().split('T')[0] + '.csv"');
             return res.send(csvData);
         }
         
@@ -1605,10 +1605,10 @@ async function handleAdminDashboard(req, res, sessionId) {
                 FROM payment_queue
             ),
             revenue_stats AS (
-                SELECT COALESCE(SUM(CASE WHEN plan = '24hr' THEN 350 WHEN plan = '3d' THEN 1050 WHEN plan = '5d' THEN 1750 WHEN plan = '7d' THEN 2400 WHEN plan = '14d' THEN 4100 WHEN plan = '30d' THEN 7500 ELSE 0 END),0) as total_revenue_lifetime,
-                       COALESCE(SUM(CASE WHEN created_at::date = CURRENT_DATE THEN CASE WHEN plan = '24hr' THEN 350 WHEN plan = '3d' THEN 1050 WHEN plan = '5d' THEN 1750 WHEN plan = '7d' THEN 2400 WHEN plan = '14d' THEN 4100 WHEN plan = '30d' THEN 7500 ELSE 0 END ELSE 0 END),0) as revenue_today,
-                       COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN CASE WHEN plan = '24hr' THEN 350 WHEN plan = '3d' THEN 1050 WHEN plan = '5d' THEN 1750 WHEN plan = '7d' THEN 2400 WHEN plan = '14d' THEN 4100 WHEN plan = '30d' THEN 7500 END ELSE 0 END),0) as revenue_week,
-                       COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '30 days' THEN CASE WHEN plan = '24hr' THEN 350 WHEN plan = '3d' THEN 1050 WHEN plan = '5d' THEN 1750 WHEN plan = '7d' THEN 2400 WHEN plan = '14d' THEN 4100 WHEN plan = '30d' THEN 7500 END ELSE 0 END),0) as revenue_month
+                SELECT COALESCE(SUM(CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 600 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1500 WHEN plan = '14d' THEN 2500 WHEN plan = '30d' THEN 5000 ELSE 0 END),0) as total_revenue_lifetime,
+                       COALESCE(SUM(CASE WHEN created_at::date = CURRENT_DATE THEN CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 600 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1500 WHEN plan = '14d' THEN 2500 WHEN plan = '30d' THEN 5000 ELSE 0 END ELSE 0 END),0) as revenue_today,
+                       COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 600 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1500 WHEN plan = '14d' THEN 2500 WHEN plan = '30d' THEN 5000 END ELSE 0 END),0) as revenue_week,
+                       COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '30 days' THEN CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 600 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1500 WHEN plan = '14d' THEN 2500 WHEN plan = '30d' THEN 5000 END ELSE 0 END),0) as revenue_month
                 FROM payment_queue
             )
             SELECT u.*, r.* FROM user_stats u, revenue_stats r
@@ -1626,7 +1626,7 @@ async function handleAdminDashboard(req, res, sessionId) {
         const monthlyRevenue = await pool.query(`
             WITH months AS (
                 SELECT DATE_TRUNC('month', created_at) as month_start,
-                       SUM(CASE plan WHEN '24hr' THEN 350 WHEN '3d' THEN 1050 WHEN '5d' THEN 1750 WHEN '7d' THEN 2400 WHEN '14d' THEN 4100 WHEN '30d' THEN 7500 ELSE 0 END) as total
+                       SUM(CASE plan WHEN '24hr' THEN 200 WHEN '3d' THEN 600 WHEN '5d' THEN 800 WHEN '7d' THEN 1500 WHEN '14d' THEN 2500 WHEN '30d' THEN 5000 ELSE 0 END) as total
                 FROM payment_queue WHERE created_at >= NOW() - INTERVAL '12 months' GROUP BY DATE_TRUNC('month', created_at)
                 ORDER BY month_start DESC
             )
@@ -1668,7 +1668,7 @@ function getLoginForm(sessionExpired) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Portal • Dream Hatcher</title>
+    <title>Admin Portal • Gumsumi International</title>
     <style>
         :root {
             --bg-primary: #0f172a;
@@ -1752,7 +1752,7 @@ function getLoginForm(sessionExpired) {
             <div class="logo">
                 <img src="https://i.imgur.com/f0xX5TT.png" style="width: 80px; height: 80px; border-radius: 16px;">
             </div>
-            <h1>Dream Hatcher Tech</h1>
+            <h1>Gumsumi International Concept</h1>
             <p>Secure Admin Portal</p>
             <div class="alert">Session expired. Please login again.</div>
             <form method="GET" action="/admin">
@@ -1858,7 +1858,7 @@ function renderDashboard(data) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DH Dashboard • Dream Hatcher</title>
+    <title>GIC Dashboard • Gumsumi International</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
@@ -2009,7 +2009,7 @@ function renderDashboard(data) {
                     <label class="plan-option" style="display:block; padding:16px; border:2px solid var(--border); border-radius:var(--radius-sm); margin-bottom:12px; cursor:pointer;" onclick="selectPlan(this)">
                         <input type="radio" name="extPlan" value="24hr" checked style="margin-right:12px;">
                         <span style="font-weight:600; color:var(--accent);">Daily Plan</span>
-                        <div style="margin-left:28px; font-size:14px; color:var(--text-secondary);">24 hours • ₦350</div>
+                        <div style="margin-left:28px; font-size:14px; color:var(--text-secondary);">24 hours • ₦200</div>
                     </label>
                     <label class="plan-option" style="display:block; padding:16px; border:2px solid var(--border); border-radius:var(--radius-sm); margin-bottom:12px; cursor:pointer;" onclick="selectPlan(this)">
                         <input type="radio" name="extPlan" value="3d" style="margin-right:12px;">
@@ -2116,7 +2116,7 @@ function renderDashboard(data) {
         <div class="brand">
             <div class="brand-logo"><img src="https://i.imgur.com/f0xX5TT.png" style="width: 48px; height: 48px; border-radius: 12px;"></div>
             <div>
-                <div class="brand-name">Dream Hatcher Tech</div>
+                <div class="brand-name">Gumsumi International Concept</div>
                 <div class="brand-user">
                     <span>${session.username}</span>
                     <span class="user-role">${session.role === 'super_admin' ? 'SUPER ADMIN' : 'ADMIN'}</span>
@@ -2227,7 +2227,7 @@ function renderDashboard(data) {
         </div>
 
         <div class="page-footer">
-            <p>Dream Hatcher Tech Dashboard v4.6 — Professional WiFi Management System</p>
+            <p>Gumsumi International Concept Dashboard v4.6 — Professional WiFi Management System</p>
             <div class="footer-stats">
                 <span><i class="fa-solid fa-database"></i> ${stats.total_users} Total Users</span>
                 <span><i class="fa-solid fa-money-bill-wave"></i> ${naira(stats.total_revenue_lifetime)} Lifetime Revenue</span>
@@ -2375,8 +2375,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 10000;
 const server = app.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`);
-  console.log(`🌐 Initialize: https://dreamhatcher-backend.onrender.com/api/initialize-payment`);
-  console.log(`🔗 Callback: https://dreamhatcher-backend.onrender.com/monnify-callback`);
+  console.log(`🌐 Initialize: https://gumsumi-backend.onrender.com/api/initialize-payment`);
+  console.log(`🔗 Callback: https://gumsumi-backend.onrender.com/monnify-callback`);
   console.log(`💰 Payment Provider: Monnify`);
 });
 server.setTimeout(30000);
