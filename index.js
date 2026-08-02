@@ -1096,7 +1096,7 @@ app.get('/', (req, res) => {
   res.send(html);
 });
 
-================================================================
+// ================================================================
 //  ADMIN DASHBOARD – FULL UNTRUNCATED VERSION (copied verbatim)
 // ================================================================
 // All admin functions and routes from your original file are preserved.
