@@ -1243,9 +1243,14 @@ async function checkExpiredUsers() {
         for (const user of result.rows) {
             await pool.query(`UPDATE payment_queue SET status = 'expired' WHERE id = $1`, [user.id]);
         }
-    } catch (error) { console.log('Checking expired users error:', error.message); }
+    } catch (error) {
+        // Silently ignore "column does not exist" errors
+        if (error.message && error.message.includes('does not exist')) {
+            return;
+        }
+        console.log('Checking expired users error:', error.message);
+    }
 }
-setInterval(checkExpiredUsers, 120000);
 
 async function syncExpiredWithMikroTik() {
     try {
@@ -1260,7 +1265,14 @@ async function syncExpiredWithMikroTik() {
             await pool.query(`UPDATE payment_queue SET last_sync = NOW() WHERE id = $1`, [user.id]);
         }
         return result.rows;
-    } catch (error) { console.log('Syncing expired users error:', error.message); return []; }
+    } catch (error) {
+        // Silently ignore "column does not exist" errors
+        if (error.message && error.message.includes('does not exist')) {
+            return [];
+        }
+        console.log('Syncing expired users error:', error.message);
+        return [];
+    }
 }
 setInterval(syncExpiredWithMikroTik, 300000);
 
