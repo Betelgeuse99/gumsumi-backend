@@ -1491,7 +1491,7 @@ function getLoginForm(sessionExpired) {
     <div class="login-container">
         <div class="login-card">
             <div class="logo">
-                <img src="https://i.imgur.com/f0xX5TT.png" style="width: 80px; height: 80px; border-radius: 16px;">
+                <img src="https://i.imgur.com/52M5NJQ.png" style="width: 80px; height: 80px; border-radius: 16px;">
             </div>
             <h1>Gumsumi International Concept</h1>
             <p>Secure Admin Portal</p>
@@ -1855,7 +1855,7 @@ function renderDashboard(data) {
 
     <nav class="topbar">
         <div class="brand">
-            <div class="brand-logo"><img src="https://i.imgur.com/f0xX5TT.png" style="width: 48px; height: 48px; border-radius: 12px;"></div>
+            <div class="brand-logo"><img src="https://i.imgur.com/52M5NJQ.png" style="width: 48px; height: 48px; border-radius: 12px;"></div>
             <div>
                 <div class="brand-name">Gumsumi International Concept</div>
                 <div class="brand-user">
@@ -2102,10 +2102,9 @@ function renderDashboard(data) {
 </html>`;
 }
 
-
 // ========== FAVICON ==========
 app.get('/favicon.ico', (req, res) => {
-  res.redirect(301, 'https://i.imgpeek.com/eSikilY_SDfQ');
+  res.redirect(301, 'https://i.imgur.com/52M5NJQ.png');
 });
 
 // ========== ERROR HANDLER ==========
