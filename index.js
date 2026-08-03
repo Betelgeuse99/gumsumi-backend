@@ -1493,7 +1493,7 @@ function getLoginForm(sessionExpired) {
            <div class="logo">
     <img src="https://i.imgur.com/52M5NJQ.png" style="width: 80px; height: 80px; border-radius: 16px; object-fit: cover;">
         </div>
-            <h1>Gumsumi International Concept</h1>
+            <h1>Gumsumi International</h1>
             <p>Secure Admin Portal</p>
             <div class="alert">Session expired. Please login again.</div>
             <form method="GET" action="/admin">
