@@ -182,6 +182,55 @@ app.get('/pay/:plan', async (req, res) => {
   }
 });
 
+// ========== NEW PAYMENT ROUTE using Query Parameter ==========
+app.get('/pay', async (req, res) => {
+  const { plan, mac, email } = req.query;
+  
+  console.log('🔍 /pay route hit with query:', req.query);
+  console.log('🔍 Plan from query:', plan);
+
+  if (!plan) {
+    return res.status(400).send('Plan is required (e.g., ?plan=daily)');
+  }
+
+  const selectedPlan = planConfig[plan];
+  if (!selectedPlan) {
+    console.error('❌ Invalid plan:', plan);
+    return res.status(400).send('Invalid plan selected');
+  }
+
+  if (!email) {
+    return res.status(400).send('Email address is required to complete purchase.');
+  }
+
+  const macAddress = mac || 'unknown';
+
+  try {
+    const { checkoutUrl, paymentReference } = await initializeSquadPayment({
+      email: email,
+      amount: selectedPlan.amount,
+      plan: selectedPlan.code,
+      mac_address: macAddress,
+      description: `Gumsumi WiFi - ${selectedPlan.duration}`
+    });
+
+    console.log(`💵 Payment: ${plan} | MAC: ${macAddress} | Email: ${email} | Ref: ${paymentReference}`);
+    res.redirect(checkoutUrl);
+  } catch (error) {
+    console.error('Payment redirect error:', error.response?.data || error.message);
+    res.send(`
+      <html>
+        <body style="font-family: Arial; text-align: center; padding: 50px; background: #1a1a2e; color: white;">
+          <h2>⚠️ Payment Error</h2>
+          <p>Could not initialize payment. Please try again.</p>
+          <a href="javascript:history.back()" style="color: #00d4ff;">← Go Back</a>
+          <p style="margin-top: 20px;">Support: 09067764540</p>
+        </body>
+      </html>
+    `);
+  }
+});
+
 app.post('/api/initialize-payment', async (req, res) => {
   try {
     const { email, amount, plan, mac_address } = req.body;
