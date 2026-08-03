@@ -1860,6 +1860,7 @@ function renderDashboard(data) {
                 <div class="brand-name">Gumsumi International Concept</div>
                 <div class="brand-user">
                     <span>${session.username}</span>
+                    <br>
                     <span class="user-role">${session.role === 'super_admin' ? 'SUPER ADMIN' : 'ADMIN'}</span>
                 </div>
             </div>
@@ -1968,7 +1969,7 @@ function renderDashboard(data) {
         </div>
 
         <div class="page-footer">
-            <p>Gumsumi International Concept Dashboard v4.6 — Professional WiFi Management System</p>
+            <p>Gumsumi International Concept Dashboard v1.0 — Professional WiFi Management System by Dream Hatcher Tech</p>
             <div class="footer-stats">
                 <span><i class="fa-solid fa-database"></i> ${stats.total_users} Total Users</span>
                 <span><i class="fa-solid fa-money-bill-wave"></i> ${naira(stats.total_revenue_lifetime)} Lifetime Revenue</span>
