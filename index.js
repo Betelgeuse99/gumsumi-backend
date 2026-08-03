@@ -21,18 +21,15 @@ app.use((req, res, next) => {
 
 process.env.TZ = 'Africa/Lagos';
 
-// ===== KEEP ALIVE (prevent Render sleep) =====
+// ===== KEEP ALIVE (prevent Render sleep) – SILENT =====
 function keepAlive() {
-  const start = Date.now();
   https.get('https://gumsumi-backend.onrender.com/health', (res) => {
-    console.log(`💓 Keep-alive ping sent (${Date.now() - start}ms)`);
-    // Drain response to avoid memory leaks
-    res.resume();
-  }).on('error', (err) => {
-    // Silent failure – but you can log if you want to debug
-    // console.error('Keep-alive error:', err.message);
-  });
+    res.resume(); // drain response
+  }).on('error', () => {});
 }
+
+keepAlive();
+setInterval(keepAlive, 10 * 60 * 1000);
 
 // Run immediately on startup
 keepAlive();
