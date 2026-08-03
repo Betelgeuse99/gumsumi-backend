@@ -1490,9 +1490,9 @@ function getLoginForm(sessionExpired) {
 <body>
     <div class="login-container">
         <div class="login-card">
-            <div class="logo">
-                <img src="https://i.imgur.com/52M5NJQ.png" style="width: 80px; height: 80px; border-radius: 16px;">
-            </div>
+           <div class="logo">
+    <img src="https://i.imgur.com/52M5NJQ.png" style="width: 80px; height: 80px; border-radius: 16px; object-fit: cover;">
+        </div>
             <h1>Gumsumi International Concept</h1>
             <p>Secure Admin Portal</p>
             <div class="alert">Session expired. Please login again.</div>
@@ -1854,9 +1854,9 @@ function renderDashboard(data) {
     </div>
 
     <nav class="topbar">
-        <div class="brand">
-            <div class="brand-logo"><img src="https://i.imgur.com/52M5NJQ.png" style="width: 48px; height: 48px; border-radius: 12px;"></div>
-            <div>
+        <div class="brand-logo">
+    <img src="https://i.imgur.com/52M5NJQ.png" style="width: 48px; height: 48px; border-radius: 12px; object-fit: cover;">
+        </div>
                 <div class="brand-name">Gumsumi International Concept</div>
                 <div class="brand-user">
                     <span>${session.username}</span>
@@ -2104,7 +2104,7 @@ function renderDashboard(data) {
 
 // ========== FAVICON ==========
 app.get('/favicon.ico', (req, res) => {
-  res.redirect(301, 'https://i.imgur.com/52M5NJQ.png');
+  res.redirect(301, 'https://i.imgpeek.com/qGVZyFrd2ahl'); 
 });
 
 // ========== ERROR HANDLER ==========
