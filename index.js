@@ -20,6 +20,18 @@ app.use((req, res, next) => {
 
 process.env.TZ = 'Africa/Lagos';
 
+// ===== KEEP ALIVE (prevent Render sleep) – silent =====
+function keepAlive() {
+  https.get('https://gumsumi-backend.onrender.com/health', () => {}).on('error', () => {});
+}
+setInterval(keepAlive, 14 * 60 * 1000);
+
+// ===== TIMEOUT MIDDLEWARE (silent) =====
+app.use((req, res, next) => {
+  res.setTimeout(30000);
+  next();
+});
+
 // Environment validation
 const requiredEnvVars = ['DATABASE_URL', 'SQUAD_BASE_URL', 'SQUAD_SECRET_KEY', 'MIKROTIK_API_KEY'];
 const missing = requiredEnvVars.filter(key => !process.env[key]);
