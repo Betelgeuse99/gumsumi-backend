@@ -274,11 +274,18 @@ app.post('/api/squad-webhook', async (req, res) => {
 //  SQUAD CALLBACK (redirect to /success)
 // ------------------------------------------------------------
 app.get('/squad-callback', (req, res) => {
-  const ref = req.query.transaction_ref || 'unknown';
-  console.log('🔗 Squad callback:', ref);
+  console.log('🔍 Full callback query:', req.query);
+  console.log('🔍 Full callback URL:', req.originalUrl);
+
+  // Try multiple possible parameter names
+  const ref = req.query.transaction_ref || 
+              req.query.transactionReference || 
+              req.query.reference || 
+              'unknown';
+
+  console.log('🔗 Squad callback ref:', ref);
   res.redirect(`/success?reference=${ref}`);
 });
-
 // ------------------------------------------------------------
 //  ALL OTHER ENDPOINTS (unchanged)
 // ------------------------------------------------------------
