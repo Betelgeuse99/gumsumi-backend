@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
 const crypto = require('crypto');
+const https = require('https');
 const axios = require('axios');
 
 const app = express();
@@ -20,17 +21,23 @@ app.use((req, res, next) => {
 
 process.env.TZ = 'Africa/Lagos';
 
-// ===== KEEP ALIVE (prevent Render sleep) – silent =====
+// ===== KEEP ALIVE (prevent Render sleep) =====
 function keepAlive() {
-  https.get('https://gumsumi-backend.onrender.com/health', () => {}).on('error', () => {});
+  const start = Date.now();
+  https.get('https://gumsumi-backend.onrender.com/health', (res) => {
+    console.log(`💓 Keep-alive ping sent (${Date.now() - start}ms)`);
+    // Drain response to avoid memory leaks
+    res.resume();
+  }).on('error', (err) => {
+    // Silent failure – but you can log if you want to debug
+    // console.error('Keep-alive error:', err.message);
+  });
 }
-setInterval(keepAlive, 14 * 60 * 1000);
 
-// ===== TIMEOUT MIDDLEWARE (silent) =====
-app.use((req, res, next) => {
-  res.setTimeout(30000);
-  next();
-});
+// Run immediately on startup
+keepAlive();
+// Then every 10 minutes
+setInterval(keepAlive, 10 * 60 * 1000);
 
 // Environment validation
 const requiredEnvVars = ['DATABASE_URL', 'SQUAD_BASE_URL', 'SQUAD_SECRET_KEY', 'MIKROTIK_API_KEY'];
