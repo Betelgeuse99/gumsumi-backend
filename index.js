@@ -140,6 +140,53 @@ const initializeSquadPayment = async ({ email, amount, plan, mac_address, descri
     throw error;
   }
 };
+// ========== NEW PAYMENT ROUTE (query parameter) ==========
+app.get('/pay', async (req, res) => {
+  const { plan, mac, email } = req.query;
+  console.log('🔍 /pay hit with query:', req.query);
+
+  if (!plan) {
+    return res.status(400).send('Plan is required (use ?plan=daily)');
+  }
+
+  const selectedPlan = planConfig[plan];
+  if (!selectedPlan) {
+    console.error('❌ Invalid plan:', plan);
+    return res.status(400).send('Invalid plan selected');
+  }
+
+  if (!email) {
+    return res.status(400).send('Email is required');
+  }
+
+  const macAddress = mac || 'unknown';
+
+  try {
+    const { checkoutUrl, paymentReference } = await initializeSquadPayment({
+      email,
+      amount: selectedPlan.amount,
+      plan: selectedPlan.code,
+      mac_address: macAddress,
+      description: `Gumsumi WiFi - ${selectedPlan.duration}`
+    });
+
+    console.log(`💵 Payment: ${plan} | MAC: ${macAddress} | Email: ${email} | Ref: ${paymentReference}`);
+    res.redirect(checkoutUrl);
+  } catch (error) {
+    console.error('Payment error:', error.response?.data || error.message);
+    res.status(500).send(`
+      <html>
+        <body style="font-family: Arial; text-align: center; padding: 50px; background: #1a1a2e; color: white;">
+          <h2>⚠️ Payment Error</h2>
+          <p>Could not initialize payment. Please try again later.</p>
+          <p style="color: #aaa;">Error: ${error.response?.data?.message || error.message}</p>
+          <a href="javascript:history.back()" style="color: #00d4ff;">← Go Back</a>
+          <p style="margin-top: 20px;">Support: 09067764540</p>
+        </body>
+      </html>
+    `);
+  }
+});
 
 // ------------------------------------------------------------
 //  PAYMENT ROUTES
