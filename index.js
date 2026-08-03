@@ -1857,7 +1857,7 @@ function renderDashboard(data) {
         <div class="brand-logo">
     <img src="https://i.imgur.com/52M5NJQ.png" style="width: 48px; height: 48px; border-radius: 12px; object-fit: cover;">
         </div>
-                <div class="brand-name">Gumsumi International Concept</div>
+                <div class="brand-name">Gumsumi International</div>
                 <div class="brand-user">
                     <span>${session.username}</span>
                     <br>
