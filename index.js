@@ -127,9 +127,18 @@ const initializeSquadPayment = async ({ email, amount, plan, mac_address, descri
       }
     );
 
+    // ✅ FIX: Check response structure properly
     if (response.data && response.data.status === 200) {
+      // The checkout URL is in response.data.data.auth_url
+      const checkoutUrl = response.data.data?.auth_url;
+      
+      if (!checkoutUrl) {
+        console.error('❌ Squad returned null auth_url:', response.data);
+        throw new Error('Squad did not return a checkout URL');
+      }
+
       return {
-        checkoutUrl: response.data.data.auth_url,
+        checkoutUrl: checkoutUrl,
         paymentReference: transactionRef
       };
     } else {
@@ -140,6 +149,7 @@ const initializeSquadPayment = async ({ email, amount, plan, mac_address, descri
     throw error;
   }
 };
+
 // ========== NEW PAYMENT ROUTE (query parameter) ==========
 app.get('/pay', async (req, res) => {
   const { plan, mac, email } = req.query;
