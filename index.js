@@ -33,6 +33,7 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
+
 pool.query('SELECT NOW()', (err) => {
   if (err) console.error('❌ Database connection failed:', err);
   else console.log('✅ Connected to Supabase');
@@ -100,7 +101,7 @@ const initializeSquadPayment = async ({ email, amount, plan, mac_address, descri
     callback_url: SQUAD_CALLBACK_URL,
     payment_channels: ['card', 'bank', 'ussd', 'transfer'],
     metadata: { mac_address: mac_address || 'unknown', plan },
-    pass_charge: false   // customer pays exact amount
+    pass_charge: false
   };
 
   try {
@@ -132,7 +133,7 @@ const initializeSquadPayment = async ({ email, amount, plan, mac_address, descri
 };
 
 // ------------------------------------------------------------
-//  PAYMENT ROUTE (query parameter) – single, cleaned version
+//  PAYMENT ROUTE
 // ------------------------------------------------------------
 app.get('/pay', async (req, res) => {
   const { plan, mac, email } = req.query;
@@ -175,7 +176,7 @@ app.get('/pay', async (req, res) => {
 });
 
 // ------------------------------------------------------------
-//  API INITIALIZE (POST) – optional frontend alternative
+//  API INITIALIZE (POST)
 // ------------------------------------------------------------
 app.post('/api/initialize-payment', async (req, res) => {
   try {
@@ -262,7 +263,7 @@ app.post('/api/squad-webhook', async (req, res) => {
       [transaction_ref, customerEmail, '', plan, username, password, macAddress, expiresAt, oneTimeToken]
     );
 
-    console.log(`🙋 Queued user ${username} | Plan: ${plan} | Expires: ${expiresAt ? expiresAt.toISOString() : 'N/A'}`);
+    console.log(`🙋 Queued user ${username} | Plan: ${plan} | Expires: ${expiresAt ? expiresAt.toISOString() : 'N/A'} | Token: ${oneTimeToken.substring(0,8)}...`);
     return res.status(200).json({ received: true });
   } catch (error) {
     console.error('❌ Squad webhook error:', error.message);
@@ -271,23 +272,16 @@ app.post('/api/squad-webhook', async (req, res) => {
 });
 
 // ------------------------------------------------------------
-//  SQUAD CALLBACK (redirect to /success)
+//  SQUAD CALLBACK
 // ------------------------------------------------------------
 app.get('/squad-callback', (req, res) => {
-  console.log('🔍 Full callback query:', req.query);
-  console.log('🔍 Full callback URL:', req.originalUrl);
-
-  // Try multiple possible parameter names
-  const ref = req.query.transaction_ref || 
-              req.query.transactionReference || 
-              req.query.reference || 
-              'unknown';
-
-  console.log('🔗 Squad callback ref:', ref);
+  const ref = req.query.reference || req.query.transaction_ref || 'unknown';
+  console.log('🔗 Squad callback:', ref);
   res.redirect(`/success?reference=${ref}`);
 });
+
 // ------------------------------------------------------------
-//  ALL OTHER ENDPOINTS (unchanged)
+//  ALL OTHER ENDPOINTS (unchanged from your working version)
 // ------------------------------------------------------------
 app.get('/api/get-token', async (req, res) => {
   const { ref } = req.query;
@@ -393,23 +387,354 @@ app.get('/auto-token', (req, res) => {
 
 app.get('/monnify-callback', (req, res) => {
   const ref = req.query.paymentReference || req.query.transactionReference || 'unknown';
-  res.redirect(`/squad-callback?transaction_ref=${ref}`);
+  res.redirect(`/squad-callback?reference=${ref}`);
 });
 
-// ========== SUCCESS PAGE (unchanged, full polling) ==========
+// ========== SUCCESS PAGE ==========
 app.get('/success', async (req, res) => {
   try {
     const ref = req.query.reference || req.query.trxref || req.query.paymentReference || '';
     console.log('💱 Success page accessed, ref:', ref);
+
     if (!ref) {
       return res.send(`<!DOCTYPE html>
         <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Payment Error</title>
         <style>body{font-family:Arial;padding:20px;text-align:center;background:#1a1a2e;color:white;min-height:100vh}.error{color:#ff6b6b;background:rgba(255,0,0,0.1);padding:20px;border-radius:10px;max-width:400px;margin:50px auto}
         </style></head><body><h1>⚠️ Payment Reference Missing</h1><div class="error"><p>No payment reference found.</p><p>Please return to the payment page and try again.</p><p>Support: <strong>09067764540</strong></p></div></body></html>`);
     }
-    // The full success HTML (same as original) – omitted here for brevity but should be included.
-    // We'll keep the full HTML as you had it – unchanged.
-    res.send(`...`); // (Insert your full success page HTML here)
+
+    // Full success page HTML
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Payment Successful - Gumsumi Wifi</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: Arial, sans-serif;
+          background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          color: white;
+        }
+        .container {
+          background: rgba(255,255,255,0.05);
+          backdrop-filter: blur(10px);
+          padding: 30px;
+          border-radius: 20px;
+          max-width: 420px;
+          width: 100%;
+          text-align: center;
+          border: 1px solid rgba(255,255,255,0.1);
+          box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .logo { font-size: 28px; margin-bottom: 20px; }
+        .success-icon { font-size: 60px; margin: 20px 0; }
+        .credentials-box {
+          background: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%);
+          color: #000;
+          padding: 25px;
+          border-radius: 15px;
+          margin: 20px 0;
+        }
+        .credentials-box h3 { margin-bottom: 15px; font-size: 18px; }
+        .credential {
+          background: rgba(255,255,255,0.9);
+          padding: 12px;
+          border-radius: 8px;
+          margin: 10px 0;
+          font-family: monospace;
+          font-size: 18px;
+          font-weight: bold;
+          user-select: all;
+          cursor: pointer;
+        }
+        .credential-label {
+          font-size: 12px;
+          color: #333;
+          margin-bottom: 5px;
+        }
+        .status-box {
+          background: rgba(0,0,0,0.3);
+          padding: 20px;
+          border-radius: 10px;
+          margin: 20px 0;
+        }
+        .spinner {
+          border: 3px solid rgba(255,255,255,0.1);
+          border-top: 3px solid #00c9ff;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          animation: spin 1s linear infinite;
+          margin: 15px auto;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .steps {
+          text-align: left;
+          background: rgba(0,0,0,0.3);
+          padding: 20px;
+          border-radius: 10px;
+          margin: 20px 0;
+        }
+        .steps h4 { margin-bottom: 15px; text-align: center; }
+        .steps ol { padding-left: 20px; }
+        .steps li { margin: 10px 0; line-height: 1.5; }
+        .btn {
+          background: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%);
+          color: #000;
+          border: none;
+          padding: 15px 30px;
+          border-radius: 50px;
+          font-size: 16px;
+          font-weight: bold;
+          cursor: pointer;
+          margin: 10px 5px;
+          transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,201,255,0.4); }
+        .hidden { display: none; }
+        .support { margin-top: 20px; font-size: 14px; color: #aaa; }
+        .attempt-info { font-size: 12px; color: #888; margin-top: 10px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="logo">🌐 Gumsumi International Concept</div>
+
+        <div id="loading-state">
+          <div class="success-icon">✅</div>
+          <h2>Payment Successful!</h2>
+          <div class="status-box">
+            <div class="spinner"></div>
+            <p id="status-text">Creating your WiFi account...</p>
+            <p class="attempt-info" id="attempt-info">This usually takes 30-60 seconds</p>
+            <p style="font-size: 12px; margin-top: 10px;">Reference: ${ref}</p>
+          </div>
+        </div>
+
+        <div id="credentials-state" class="hidden">
+          <div class="success-icon">🛜🔑</div>
+          <h4>User & Password</h4>
+
+          <div class="credentials-box">
+            <h3>Login Details</h3>
+            <div class="credential-label">Username</div>
+            <div class="credential" id="username-display" onclick="copyText(this)">---</div>
+            <div class="credential-label">Password</div>
+            <div class="credential" id="password-display" onclick="copyText(this)">---</div>
+            <div class="credential-label">Plan</div>
+            <div class="credential" id="plan-display">---</div>
+            <div class="credential-label">Expires</div>
+            <div class="credential" id="expires-display">---</div>
+          </div>
+
+          <button class="btn" onclick="copyCredentials()">📋 Copy Credentials</button>
+          <button class="btn" id="autoLoginBtn" onclick="autoLogin()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">🚀 Auto-Login Now</button>
+
+          <div id="autoLoginStatus" style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; display: none;">
+            <p id="autoLoginText">⏳ Auto-connecting in <span id="autoLoginCountdown">8</span> seconds...</p>
+          </div>
+        </div>
+
+        <div id="error-state" class="hidden">
+          <div class="success-icon">⏳</div>
+          <h2>Still Processing...</h2>
+          <div class="status-box">
+            <p id="error-text">Your account is being created. This may take a bit longer.</p>
+            <button class="btn" onclick="checkStatus()" style="margin-top: 15px;">🔄 Check Again</button>
+            <p style="margin-top: 15px; font-size: 12px;">
+              Reference: <strong>${ref}</strong><br>
+              Save this reference and contact support if needed.
+            </p>
+          </div>
+        </div>
+
+        <div class="support">
+          Need help? Call: <strong>09067764540</strong>
+        </div>
+      </div>
+
+      <script>
+        const ref = '${ref}';
+        let checkCount = 0;
+        const maxChecks = 20;
+        let credentials = { username: '', password: '', plan: '', expires_at: '' };
+
+        function showState(state) {
+          document.getElementById('loading-state').classList.add('hidden');
+          document.getElementById('credentials-state').classList.add('hidden');
+          document.getElementById('error-state').classList.add('hidden');
+          document.getElementById(state + '-state').classList.remove('hidden');
+        }
+
+        function copyText(element) {
+          const text = element.textContent;
+          navigator.clipboard.writeText(text).then(function() {
+            const original = element.textContent;
+            element.textContent = '✓ Copied!';
+            setTimeout(function() { element.textContent = original; }, 1000);
+          });
+        }
+
+        let autoLoginTimer = null;
+        let autoLoginCountdown = 8;
+        const HOTSPOT_LOGIN_URL = 'http://192.168.88.1/login';
+
+        function startAutoLoginCountdown() {
+          document.getElementById('autoLoginStatus').style.display = 'block';
+
+          autoLoginTimer = setInterval(function() {
+            autoLoginCountdown--;
+            document.getElementById('autoLoginCountdown').textContent = autoLoginCountdown;
+
+            if (autoLoginCountdown <= 0) {
+              clearInterval(autoLoginTimer);
+              autoLogin();
+            }
+          }, 1000);
+        }
+
+        function autoLogin() {
+          if (autoLoginTimer) {
+            clearInterval(autoLoginTimer);
+          }
+
+          if (!credentials.username || !credentials.password) {
+            document.getElementById('autoLoginText').innerHTML = '❌ Credentials not ready. Please copy and login manually.';
+            return;
+          }
+
+          document.getElementById('autoLoginText').innerHTML = '🔄 Connecting to WiFi login page...';
+          document.getElementById('autoLoginBtn').disabled = true;
+          document.getElementById('autoLoginBtn').textContent = '⏳ Connecting...';
+
+          const loginUrl = HOTSPOT_LOGIN_URL +
+            '?username=' + encodeURIComponent(credentials.username) +
+            '&password=' + encodeURIComponent(credentials.password) +
+            '&auto=1';
+
+          try {
+            window.location.href = loginUrl;
+
+            setTimeout(function() {
+              if (document.getElementById('autoLoginText')) {
+                document.getElementById('autoLoginText').innerHTML =
+                  '⚠️ Auto-login may have opened in a new tab. ' +
+                  '<br>If not connected, <a href="' + loginUrl + '" target="_blank" style="color: #00c9ff;">click here</a> or login manually.';
+                document.getElementById('autoLoginBtn').disabled = false;
+                document.getElementById('autoLoginBtn').textContent = '🔄 Try Again';
+              }
+            }, 3000);
+
+          } catch (e) {
+            window.open(loginUrl, '_blank');
+            document.getElementById('autoLoginText').innerHTML =
+              '✅ Login page opened! Check new tab/window.';
+          }
+        }
+
+        function copyCredentials() {
+          const text = 'Username: ' + credentials.username + '\\nPassword: ' + credentials.password + '\\nPlan: ' + credentials.plan + '\\nExpires: ' + credentials.expires_at;
+          navigator.clipboard.writeText(text).then(function() {
+            const btns = document.querySelectorAll('.btn');
+            btns.forEach(function(btn) {
+              if (btn.textContent.includes('Copy')) {
+                btn.textContent = '✓ Copied!';
+                setTimeout(function() { btn.textContent = '📋 Copy Credentials'; }, 2000);
+              }
+            });
+          });
+        }
+
+        async function checkStatus() {
+          checkCount++;
+          const statusText = document.getElementById('status-text');
+          const attemptInfo = document.getElementById('attempt-info');
+
+          statusText.textContent = 'Checking for your credentials...';
+          attemptInfo.textContent = 'Attempt ' + checkCount + ' of ' + maxChecks + ' (checking every 5 seconds)';
+
+          try {
+            const response = await fetch('/api/check-status?ref=' + encodeURIComponent(ref));
+            const data = await response.json();
+
+            console.log('Status check #' + checkCount + ':', data);
+
+            if (data.ready && data.username && data.password) {
+              credentials = {
+                username: data.username,
+                password: data.password,
+                plan: data.plan || 'WiFi Access',
+                expires_at: data.expires_at ? new Date(data.expires_at).toLocaleString('en-NG', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : 'Not set'
+              };
+
+              document.getElementById('username-display').textContent = credentials.username;
+              document.getElementById('password-display').textContent = credentials.password;
+              document.getElementById('plan-display').textContent = credentials.plan;
+              document.getElementById('expires-display').textContent = credentials.expires_at;
+
+              showState('credentials');
+              setTimeout(startAutoLoginCountdown, 1000);
+
+            } else if (checkCount >= maxChecks) {
+              document.getElementById('error-text').textContent =
+                'Your payment was received but account creation is taking longer than expected. ' +
+                'Please wait a few minutes and try the "Check Again" button, or contact support.';
+              showState('error');
+
+            } else {
+              if (data.status === 'pending') {
+                statusText.textContent = 'Account queued, waiting for MikroTik to create user...';
+              } else if (data.status === 'processed') {
+                statusText.textContent = 'Account created! Loading credentials...';
+              } else {
+                statusText.textContent = data.message || 'Processing your payment...';
+              }
+
+              setTimeout(checkStatus, 5000);
+            }
+
+          } catch (error) {
+            console.error('Check error:', error);
+
+            if (checkCount >= 5) {
+              statusText.textContent = 'Connection issue, retrying...';
+            }
+
+            if (checkCount >= maxChecks) {
+              document.getElementById('error-text').textContent =
+                'Connection issues detected. Please check your internet and try again.';
+              showState('error');
+            } else {
+              setTimeout(checkStatus, 5000);
+            }
+          }
+        }
+
+        setTimeout(checkStatus, 3000);
+      </script>
+    </body>
+    </html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
   } catch (error) {
     console.error('Success page error:', error.message);
     res.status(500).send('Error loading page. Please contact support: 09067764540');
