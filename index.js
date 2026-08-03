@@ -1642,7 +1642,7 @@ function renderDashboard(data) {
             top: 0;
             z-index: 100;
         }
-        .brand { display: flex; align-items: center; gap: 14px; }
+        .brand { display: flex; align-items: center; gap: 8px; }
         .brand-logo { width: 48px; height: 48px; border-radius: 12px; background: transparent; display: flex; align-items: center; justify-content: center; }
         .brand-name { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
         .brand-user { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
@@ -2105,7 +2105,7 @@ function renderDashboard(data) {
 
 // ========== FAVICON ==========
 app.get('/favicon.ico', (req, res) => {
-  res.redirect(301, 'https://i.imgpeek.com/qGVZyFrd2ahl'); 
+  res.redirect(301, 'https://i.imgpeek.com/Nrz7gM_lSqzD'); 
 });
 
 // ========== ERROR HANDLER ==========
