@@ -191,36 +191,47 @@ app.get('/pay', async (req, res) => {
 // ------------------------------------------------------------
 //  PAYMENT ROUTES
 // ------------------------------------------------------------
-app.get('/pay/:plan', async (req, res) => {
-  const { plan } = req.params;
-  const mac = req.query.mac || 'unknown';
-  const email = req.query.email;
+app.get('/pay', async (req, res) => {
+  const { plan, mac, email } = req.query;
+  console.log('🔍 /pay hit with query:', req.query);
 
+  if (!plan) return res.status(400).send('Plan required');
   const selectedPlan = planConfig[plan];
-  if (!selectedPlan) return res.status(400).send('Invalid plan selected');
+  if (!selectedPlan) return res.status(400).send('Invalid plan');
+  if (!email) return res.status(400).send('Email required');
 
-  if (!email) {
-    return res.status(400).send('Email address is required to complete purchase.');
-  }
+  const macAddress = mac || 'unknown';
 
   try {
     const { checkoutUrl, paymentReference } = await initializeSquadPayment({
-      email: email,
+      email,
       amount: selectedPlan.amount,
       plan: selectedPlan.code,
-      mac_address: mac,
+      mac_address: macAddress,
       description: `Gumsumi WiFi - ${selectedPlan.duration}`
     });
 
-    console.log(`💵 Payment: ${plan} | MAC: ${mac} | Email: ${email} | Ref: ${paymentReference}`);
+    console.log(`💵 Payment: ${plan} | MAC: ${macAddress} | Email: ${email} | Ref: ${paymentReference}`);
     res.redirect(checkoutUrl);
   } catch (error) {
-    console.error('Payment redirect error:', error.response?.data || error.message);
-    res.send(`
+    // Log full error for debugging
+    console.error('❌ Squad error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers,
+        data: error.config?.data,
+      }
+    });
+    res.status(500).send(`
       <html>
         <body style="font-family: Arial; text-align: center; padding: 50px; background: #1a1a2e; color: white;">
           <h2>⚠️ Payment Error</h2>
-          <p>Could not initialize payment. Please try again.</p>
+          <p>Could not initialize payment. Please try again later.</p>
+          <p style="color: #aaa; font-size: 0.9rem;">Error: ${error.response?.data?.message || error.message}</p>
           <a href="javascript:history.back()" style="color: #00d4ff;">← Go Back</a>
           <p style="margin-top: 20px;">Support: 09067764540</p>
         </body>
