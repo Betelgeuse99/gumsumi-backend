@@ -14,7 +14,7 @@ type AdminCfg = { password: string; role: string; permissions: string[] };
 //   staff       -> read only, and can only see their own session/logs
 const ROLE_PERMS: Record<string, string[]> = {
   super_admin: ["delete", "create", "update", "extend", "manage_users", "export", "force_logout"],
-  admin: ["delete", "create", "update", "extend", "manage_users", "export"],
+  admin: ["delete", "create", "update", "extend", "manage_users", "export", "force_logout"],
   viewer: ["view"],
   staff: ["view"],
 };
@@ -129,16 +129,23 @@ export async function handleAdmin(req: Request, path: string): Promise<Response>
   const body = ["POST", "PATCH"].includes(method) ? await readJson(req) : {};
   const sessionId = (body.sessionId as string) || q.get("sessionId");
 
-  // ---- site subscription gate (server-side, before ANY login) ----
-  if (!(await licenceActive())) {
+  // ---- site subscription gate ----
+  // superadmin is never restricted; admin/staff get the 402 so the dashboard
+  // can show the payment screen instead of the app.
+  const isLogin = path === "/admin/api/login" && method === "POST";
+  const loginCfg = isLogin ? adminUsers()[String(body.username || "")] : undefined;
+  const session = await validateSession(sessionId);
+  const privileged = loginCfg?.role === "super_admin" || session?.role === "super_admin";
+  if (!(await licenceActive()) && !privileged) {
     return json({
       error: "subscription_required",
       message: "This site's subscription has expired. Subscribe to continue.",
+      active: false,
     }, 402);
   }
 
   // ---- login ----
-  if (path === "/admin/api/login" && method === "POST") {
+  if (isLogin) {
     const username = String(body.username || "");
     const password = String(body.password || "");
     const cfg = adminUsers()[username];
@@ -156,7 +163,6 @@ export async function handleAdmin(req: Request, path: string): Promise<Response>
   }
 
   // everything below needs a session
-  const session = await validateSession(sessionId);
   if (!session) return json({ error: "Unauthorized" }, 401);
   const can = (p: string) => (session.role === "super_admin") || permsOf(session.role).includes(p);
 
@@ -351,11 +357,16 @@ export async function handleAdmin(req: Request, path: string): Promise<Response>
   }
 
   if (path === "/admin/api/force-logout" && method === "POST") {
-    if (session.role !== "super_admin") return json({ error: "Permission denied" }, 403);
-    await getSupabase().from("admin_logs")
+    if (session.role === "staff") return json({ error: "Permission denied" }, 403);
+    let q = getSupabase().from("admin_logs")
       .update({ is_active: false, logout_time: new Date().toISOString() })
       .eq("is_active", true).neq("session_id", sessionId);
-    return json({ success: true, message: "All other sessions logged out" });
+    if (session.role === "admin") q = q.eq("role", "staff");
+    await q;
+    return json({
+      success: true,
+      message: session.role === "admin" ? "Staff sessions logged out" : "All other sessions logged out",
+    });
   }
 
   return json({ error: "Not found", path }, 404);
