@@ -338,8 +338,8 @@ function applyPerms(){const pb=$('providerBtn');if(pb)pb.style.display=can('mana
 function setRole(username,role){$('who').textContent=username;myRole=role;const m=roleMeta(role);const c=$('roleChip');c.textContent=m.l;c.style.background=m.bg;c.style.color=m.c;}
 function effStatus(u){return (u.status==='processed'&&u.expires_at&&new Date(u.expires_at)<=new Date())?'expired':u.status;}
 function statusLabel(s){return ({processed:'ACTIVE',pending:'PENDING',expired:'EXPIRED'})[s]||(s||'').toUpperCase();}
-const PLANS={'24hr':{l:'Daily',gb:4},'3d':{l:'3-Day',gb:11},'5d':{l:'5-Day',gb:19},'7d':{l:'Weekly',gb:26},'14d':{l:'2-Week',gb:50},'30d':{l:'Monthly',gb:100}};
-function planLabel(code){const p=PLANS[code];return p?`${p.l} · ${p.gb}GB`:(code||'—');}
+const PLANS={'24hr':{l:'Daily'},'3d':{l:'3-Day'},'5d':{l:'5-Day'},'7d':{l:'Weekly'},'14d':{l:'2-Week'},'30d':{l:'Monthly'}};
+function planLabel(code){const p=PLANS[code];return p?p.l:(code||'—');}
 let idleTimer=null;
 function resetIdle(){clearTimeout(idleTimer);idleTimer=setTimeout(()=>{if(sid){toast('Logged out after 10 minutes of inactivity');logout();}},10*60*1000);}
 ['mousemove','keydown','click','scroll','touchstart'].forEach(e=>document.addEventListener(e,resetIdle,true));
