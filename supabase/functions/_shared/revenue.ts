@@ -1,14 +1,14 @@
 /**
  * Revenue calculation for the admin dashboards.
- * Prices are the Alimu plan prices (24hr = 4 GB / ₦200).
+ * Prices are the Gumsumi plan prices (time-based, no data caps).
  * Never uses the RPC's stale ₦350 table.
  */
 
 export const PLAN_PRICES: Record<string, number> = {
   "24hr": 200,
   "3d": 600,
-  "5d": 1000,
-  "7d": 1400,
+  "5d": 800,
+  "7d": 1500,
   "14d": 2500,
   "30d": 5000,
 };
