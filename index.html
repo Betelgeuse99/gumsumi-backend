@@ -394,7 +394,8 @@ async function loadStats(){
     {v:sessions,label:'Active Admin Sessions',ic:'fa-user-shield',c:'var(--purple)',bg:'var(--purple-bg)',tag:'SESSIONS',click:'showSessions()'},
     {v:money(s.revenue_week),label:'This Week',ic:'fa-calendar-week',c:'var(--warning)',bg:'var(--warning-bg)',tag:'7 days',currency:true},
     {v:money(s.revenue_month),label:'This Month',ic:'fa-calendar-days',c:'var(--accent)',bg:'var(--accent-soft)',tag:'30 days',currency:true},
-    {v:s.total_users,label:'Total Clients',ic:'fa-address-book',c:'var(--cyan)',bg:'var(--cyan-bg)',tag:'All time'},
+    {v:s.total_users,label:'Total Clients',ic:'fa-address-book',c:'var(--cyan)',bg:'var(--cyan-bg)',tag:'All time',footer:`<i class="fa-solid fa-store"></i> POS: <strong>${pos.connected}</strong> connected · <strong>${pos.total}</strong> all-time`},
+    {v:pos.connected,label:'POS Clients',ic:'fa-store',c:'var(--gold)',bg:'var(--gold-soft)',tag:'CONNECTED',click:'openPos()',footer:`All-time <strong>${pos.total}</strong> · 7d <strong>${pos.week}</strong> · 30d <strong>${pos.month}</strong>`},
     {v:s.expired,label:'Expired Users',ic:'fa-user-clock',c:'var(--danger)',bg:'var(--danger-bg)',tag:'LAPSED',click:"setFilter('expired')",footer:'<i class="fa-solid fa-filter"></i> Click to view expired'}
   ];
   $('stats').innerHTML=cards.map(c=>`<div class="metric" ${c.click?`onclick="${c.click}"`:''}>
@@ -469,6 +470,17 @@ async function loadActivity(){
   const f=$('activityFeed');f.scrollTop=f.scrollHeight;
 }
 function fmtIdle(s){s=Math.max(0,Number(s)||0);const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h?`${h}h ${m}m idle`:`${m}m ${sec}s idle`;}
+function openPos(){
+  const meta=$('posMeta'), rows=$('posRows');
+  if(!posClients.length){
+    meta.textContent='No POS clients are connected right now.';
+    rows.innerHTML='<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text-muted)">No connected POS clients</td></tr>';
+  }else{
+    meta.textContent=posClients.length+' connected POS client(s). Only currently connected POS clients are shown here.';
+    rows.innerHTML=posClients.map(c=>`<tr><td>${c.ip||'—'}</td><td class="password-cell">${c.mac||'—'}</td><td>${c.hostname||'—'}</td><td>${c.last_seen?new Date(c.last_seen).toLocaleString('en-NG',{timeZone:LAGOS_TZ}):'—'}</td></tr>`).join('');
+  }
+  openModal('posModal');
+}
 async function showSessions(){
   const d=await api('/admin/api/sessions?sessionId='+sid);if(!d.success)return;
   $('logs').innerHTML=d.data.map(r=>{
