@@ -283,6 +283,18 @@
   </div>
 </div>
 
+<!-- POS clients modal -->
+<div class="modal-overlay" id="posModal">
+  <div class="modal-box" style="max-width:900px">
+    <div class="modal-header"><h3 class="modal-title"><i class="fa-solid fa-store"></i> Connected POS Clients</h3><button class="modal-close" onclick="closeModal('posModal')">&times;</button></div>
+    <div class="modal-body">
+      <div id="posMeta" style="margin-bottom:12px;color:var(--text-muted)"></div>
+      <div class="table-wrap"><table><thead><tr><th>IP Address</th><th>MAC Address</th><th>Hostname</th><th>Last Seen</th></tr></thead><tbody id="posRows"></tbody></table></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('posModal')">Close</button></div>
+  </div>
+</div>
+
 <!-- Contact method modal -->
 <div class="modal-overlay" id="contactModal">
   <div class="modal-box" style="max-width:420px">
@@ -368,8 +380,11 @@ function refreshAll(){loadAll();toast('Refreshed');}
 function tick(){const d=new Date();$('clock').textContent='Lagos Time: '+d.toLocaleTimeString('en-NG',{timeZone:LAGOS_TZ,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});}
 setInterval(tick,1000);tick();
 setInterval(()=>{if(sid&&!document.querySelector('.modal-overlay.open')){loadStats();loadUsers(page);}},60000);
+let posClients=[];
 async function loadStats(){
   const d=await api('/admin/api/stats?sessionId='+sid);if(!d.success)return;const s=d.data;
+  const pos=s.pos||{connected:0,total:0,week:0,month:0,clients:[]};
+  posClients=Array.isArray(pos.clients)?pos.clients:[];
   let sessions=0;
   try{const l=await api('/admin/api/sessions?sessionId='+sid);if(l.success)sessions=l.active;}catch(e){}
   const cards=[

@@ -35,6 +35,7 @@ import {
 import { getSupabase } from "../_shared/supabase.ts";
 import { handleAdmin, licenceActive, clearLicenceCache } from "../_shared/admin.ts";
 import { syncMikhmonUsers } from "../_shared/mikhmon.ts";
+import { purgePosClient, syncPosClients } from "../_shared/pos.ts";
 
 const PUBLIC_BASE = Deno.env.get("PUBLIC_BASE_URL") ||
   "https://gpcqnsmdcosdulhyseqb.supabase.co/functions/v1/hotspot";
@@ -373,6 +374,35 @@ function resolvePlan(raw?: string): { planCode: string; amount: number } | null 
 }
 
 // ---------- route handlers ----------
+async function posSync(req: Request): Promise<Response> {
+  const body = await req.json().catch(() => null);
+  if (!body || !Array.isArray(body.clients)) {
+    return json({ success: false, error: "clients array required" }, 400);
+  }
+  try {
+    const result = await syncPosClients(getSupabase(), body.clients);
+    return json({ success: true, ...result });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "POS sync failed";
+    console.error("POS sync error:", message);
+    return json({ success: false, error: message }, 500);
+  }
+}
+
+async function posPurge(req: Request): Promise<Response> {
+  const body = await req.json().catch(() => null);
+  const mac = String(body?.mac ?? "").trim();
+  if (!mac) return json({ success: false, error: "mac required" }, 400);
+  try {
+    const removed = await purgePosClient(getSupabase(), mac);
+    return json({ success: true, removed });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "POS purge failed";
+    console.error("POS purge error:", message);
+    return json({ success: false, error: message }, 500);
+  }
+}
+
 function checkApiKey(req: Request): boolean {
   const key = req.headers.get("x-api-key") || queryParams(req).get("api_key");
   const expected = Deno.env.get("MIKROTIK_API_KEY") || "";
@@ -697,6 +727,14 @@ serve(async (req: Request) => {
     if (path.startsWith("/api/mark-expired/") && method === "POST") {
       if (!checkApiKey(req)) return text("FORBIDDEN", 403);
       return await markExpired(path.substring("/api/mark-expired/".length));
+    }
+    if (path === "/api/pos-sync" && method === "POST") {
+      if (!checkApiKey(req)) return text("FORBIDDEN", 403);
+      return await posSync(req);
+    }
+    if (path === "/api/pos-purge" && method === "POST") {
+      if (!checkApiKey(req)) return text("FORBIDDEN", 403);
+      return await posPurge(req);
     }
     // The router calls this when a user has consumed their whole data
     // allowance (bytes-in + bytes-out >= limit-bytes-total). The backend only

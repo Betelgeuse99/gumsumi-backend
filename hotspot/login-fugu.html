@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gumsumi International Concept - WiFi Hotspot</title>
+    <style>
+        :root {
+            --primary: #6b21a8;
+            --primary-dark: #581c87;
+            --accent: #2dc6b6;
+            --accent-glow: rgba(45, 198, 182, 0.15);
+            --success: #9bd239;
+            --success-dark: #82b81f;
+            --warning: #f5d316;
+            --danger: #ea41b2;
+            
+            --bg-dark: #08080f;
+            --bg-card: #0e0e1b;
+            --bg-elevated: #18182b;
+            --bg-input: #0a0a15;
+            --text-primary: #f0f4ff;
+            --text-secondary: #8d949c;
+            --text-muted: #4a5b70;
+            --border: #24243a;
+            --border-light: #32324a;
+            --glow: rgba(45, 198, 182, 0.35);
+
+            --tier-daily: #2dc6b6;
+            --tier-3day: #ea41b2;
+            --tier-5day: #9bd239;
+            --tier-weekly: #6b21a8;
+            --tier-2week: #f5d316;
+            --tier-monthly: #e87a3b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
+                radial-gradient(ellipse at 15% 10%, rgba(45, 198, 182, 0.12) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 85%, rgba(107, 33, 168, 0.08) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 40%, rgba(234, 65, 178, 0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-pattern::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 16px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            padding: 24px 0 16px;
+            animation: fadeSlideDown 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeSlideDown {
+            from { opacity: 0; transform: translateY(-24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 10px;
+        }
+
+        .brand-text { text-align: left; }
+
+        .brand-name {
+            font-size: 1.65rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #fff 20%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .brand-sub {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.02em;
+        }
+
+        .tagline {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .scroll-banner {
+            overflow: hidden;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, rgba(45, 198, 182, 0.08), rgba(45, 198, 182, 0.04));
+            padding: 10px 0;
+            border-radius: 10px;
+            border: 1px solid rgba(45, 198, 182, 0.2);
+        }
+
+        .scroll-text {
+            color: #f5d316;
+            font-weight: 600;
+            font-size: 0.92rem;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 20px;
+            flex: 1;
+            animation: fadeSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-card {
+            background: var(--bg-card);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+        }
+
+        .section-header {
+            padding: 18px 22px;
+            background: linear-gradient(100deg, rgba(45, 198, 182, 0.08), transparent 70%);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(145deg, var(--accent), var(--primary));
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 4px 16px var(--glow);
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .section-body { padding: 20px; }
+
+        .plan-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .plan-row-label {
+            grid-column: 1 / -1;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            padding: 6px 0 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plan-row-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border), transparent);
+        }
+
+        .plan-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plan-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--tier-color, var(--accent));
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .plan-card:hover {
+            border-color: var(--tier-color, var(--accent));
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+        }
+
+        .plan-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .plan-emoji { font-size: 1.4rem; line-height: 1; }
+        .plan-name { font-size: 0.92rem; font-weight: 700; flex: 1; }
+
+        .plan-badge {
+            background: linear-gradient(135deg, var(--tier-color, var(--accent)), rgba(0,0,0,0.2));
+            color: white;
+            font-size: 0.6rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .plan-duration {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .plan-price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .price-amount {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--tier-color, var(--accent));
+        }
+
+        .price-period { font-size: 0.75rem; color: var(--text-muted); }
+
+        .pay-btn {
+            background: linear-gradient(135deg, var(--tier-color, var(--primary)), rgba(0,0,0,0.15));
+            color: white;
+            border: none;
+            padding: 11px 16px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .pay-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        .tier-daily { --tier-color: var(--tier-daily); }
+        .tier-3day { --tier-color: var(--tier-3day); }
+        .tier-5day { --tier-color: var(--tier-5day); }
+        .tier-weekly { --tier-color: var(--tier-weekly); }
+        .tier-2week { --tier-color: var(--tier-2week); }
+        .tier-monthly { --tier-color: var(--tier-monthly); }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 7px; }
+        .form-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .form-input {
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-family: inherit;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(45, 198, 182, 0.12);
+        }
+
+        .login-btn {
+            background: linear-gradient(145deg, var(--accent), var(--primary));
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .error-message {
+            background: linear-gradient(90deg, rgba(234, 65, 178, 0.12), rgba(234, 65, 178, 0.06));
+            border-left: 4px solid var(--danger);
+            border-radius: 12px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .mac-info {
+            background: rgba(45, 198, 182, 0.08);
+            border: 1px solid rgba(45, 198, 182, 0.2);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            font-size: 0.82rem;
+            color: var(--accent);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 24px 16px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+        }
+
+        .footer a { color: var(--accent); text-decoration: none; }
+
+        .hidden-form { display: none !important; }
+
+        .cred-overlay, .email-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .cred-box, .email-modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 28px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .email-modal-box input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-input);
+            color: white;
+            font-size: 1rem;
+            margin: 20px 0;
+        }
+
+        .email-modal-box .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .email-modal-box button {
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+        }
+
+        .email-submit { background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; }
+        .email-cancel { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+        .email-error { color: #ff8888; margin-top: 12px; font-size: 0.85rem; }
+
+        .cred-spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(45, 198, 182, 0.15);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 18px;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 880px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+
+    <!-- Hidden CHAP form -->
+    <form name="sendin" action="$(link-login-only)" method="post" class="hidden-form">
+        <input type="hidden" name="username">
+        <input type="hidden" name="password">
+        <input type="hidden" name="dst" value="$(link-orig)">
+        <input type="hidden" name="popup" value="true">
+    </form>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo-container">
+                <img src="img/gumsumi-logo.png" alt="Gumsumi International Concept" width="120">
+                <div class="brand-text">
+                    <div class="brand-name">Gumsumi International Concept</div>
+                    <div class="brand-sub">Squad Connectivity Solutions</div>
+                </div>
+            </div>
+            <p class="tagline">Reliable High-Speed WiFi Access</p>
+        </header>
+
+        <div class="scroll-banner">
+            <div class="scroll-text">
+                Welcome! Pay seamlessly with SquadPay!📌 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </div>
+        </div>
+
+        <main class="main-grid">
+            <!-- LEFT: Plans -->
+            <section class="section-card">
+                <div class="section-header">
+                    <div class="section-icon">💳</div>
+                    <h2 class="section-title">Subscription Plans</h2>
+                </div>
+                <div class="section-body">
+                    <div class="mac-info" id="macInfo">
+                        📱 Your Device: <strong id="macDisplay">$(mac)</strong>
+                    </div>
+
+                    <div class="plan-grid">
+                        <div class="plan-row-label">Short-Term</div>
+
+                        <div class="plan-card tier-daily">
+                            <div class="plan-card-top">
+                                <span class="plan-emoji">⚡</span>
+                                <span class="plan-name">Daily Access</span>
+                            </div>
+                            <div class="plan-duration">24 hours unlimited browsing</div>
+                            <div class="plan-price-row">
+                                <span class="price-amount">₦200</span>
+                                <span class="price-period">/day</span>
+                            </div>
+                            <button type="button" class="pay-btn" onclick="startPayment('daily')">🔒 Pay Now →</button>
+                        </div>
+
+                        <div class="plan-card tier-3day">
+                            <div class="plan-card-top">
+                                <span class="plan-emoji">🔥</span>
+                                <span class="plan-name">3-Day Pass</span>
+                                <span class="plan-badge">Saver</span>
+                            </div>
+                            <div class="plan-duration">3 days unlimited browsing</div>
+                            <div class="plan-price-row">
+                                <span class="price-amount">₦600</span>
+                                <span class="price-period">/3 days</span>
+                            </div>
+                            <button type="button" class="pay-btn" onclick="startPayment('3day')">🔒 Pay Now →</button>
+                        </div>
+
+                        <div class="plan-row-label">Medium-Term</div>
+
+                        <div class="plan-card tier-5day">
+                            <div class="plan-card-top">
+                                <span class="plan-emoji">📡</span>
+                                <span class="plan-name">5-Day Plan</span>
+                            </div>
+                            <div class="plan-duration">5 days unlimited browsing</div>
+                            <div class="plan-price-row">
+                                <span class="price-amount">₦800</span>
+                                <span class="price-period">/5 days</span>
+                            </div>
+                            <button type="button" class="pay-btn" onclick="startPayment('5day')">🔒 Pay Now →</button>
+                        </div>
+
+                        <div class="plan-card tier-weekly">
+                            <div class="plan-card-top">
+                                <span class="plan-emoji">🚀</span>
+                                <span class="plan-name">Weekly Plan</span>
+                                <span class="plan-badge">Popular</span>
+                            </div>
+                            <div class="plan-duration">7 days unlimited access</div>
+                            <div class="plan-price-row">
+                                <span class="price-amount">₦1,500</span>
+                                <span class="price-period">/week</span>
+                            </div>
+                            <button type="button" class="pay-btn" onclick="startPayment('weekly')">🔒 Pay Now →</button>
+                        </div>
+
+                        <div class="plan-row-label">Extended</div>
+
+                        <div class="plan-card tier-2week">
+                            <div class="plan-card-top">
+                                <span class="plan-emoji">💎</span>
+                                <span class="plan-name">2-Week Plan</span>
+                                <span class="plan-badge">Value</span>
+                            </div>
+                            <div class="plan-duration">14 days unlimited access</div>
+                            <div class="plan-price-row">
+                                <span class="price-amount">₦2,500</span>
+                                <span class="price-period">/2 weeks</span>
+                            </div>
+                            <button type="button" class="pay-btn" onclick="startPayment('2week')">🔒 Pay Now →</button>
+                        </div>
+
+                        <div class="plan-card tier-monthly">
+                            <div class="plan-card-top">
+                                <span class="plan-emoji">👑</span>
+                                <span class="plan-name">Monthly Plan</span>
+                                <span class="plan-badge">Best Value</span>
+                            </div>
+                            <div class="plan-duration">30 days unlimited access</div>
+                            <div class="plan-price-row">
+                                <span class="price-amount">₦5,000</span>
+                                <span class="price-period">/month</span>
+                            </div>
+                            <button type="button" class="pay-btn" onclick="startPayment('monthly')">🔒 Pay Now →</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT: Login Section -->
+            <section class="section-card">
+                <div class="section-header">
+                    <div class="section-icon">🔐</div>
+                    <h2 class="section-title">Login with Credentials</h2>
+                </div>
+                <div class="section-body">
+                    $(if error)
+                    <div class="error-message">
+                        <span class="error-icon">⚠️</span>
+                        <div class="error-text">
+                            <strong>Login Failed!</strong>
+                            <span>$(error)</span>
+                        </div>
+                    </div>
+                    $(endif)
+
+                    <div class="chap-refresh-banner" id="chapWarning" style="display:none; color: var(--accent);">
+                        🔄 Secure connection not ready. Refreshing...
+                    </div>
+
+                    <form name="login" action="$(link-login-only)" method="post" class="login-form" onsubmit="return doLogin()">
+                        <input type="hidden" name="dst" value="$(link-orig)">
+                        <input type="hidden" name="popup" value="true">
+
+                        <div class="form-group">
+                            <label class="form-label">👤 Username</label>
+                            <input type="text" name="username" class="form-input" placeholder="Enter your username" value="$(username)" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">🔒 Password</label>
+                            <input type="password" name="password" class="form-input" placeholder="Enter your password" required>
+                        </div>
+
+                        <button type="submit" class="login-btn" id="loginBtn">🌐 Connect to WiFi</button>
+                    </form>
+
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="#" onclick="showEmailModal('retrieve'); return false;" style="color: var(--accent); text-decoration: none; font-size: 0.85rem;">
+                             🗝️Forgot username/password? Click Here 👈
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>By connecting, you agree to our <a href="#">Terms of Service</a></p>
+            <p style="margin-top: 10px;">Contact support:</p>
+            <div style="margin-top: 5px;">
+                <span>📞 09067764540</span> | <span>📞 07037412314</span>
+            </div>
+            <p style="margin-top: 12px; font-size: 0.75rem; color: var(--text-muted);">Powered by 🔒SquadPay Secure Payments</p>
+        </footer>
+    </div>
+
+    <!-- Overlay for MAC Auto-Detection -->
+    <div class="cred-overlay" id="credOverlay">
+        <div class="cred-box">
+            <div id="credLoading">
+                <div class="cred-spinner"></div>
+                <h2 style="color:#2dc6b6; margin-bottom:10px; font-size:1.2rem;">Checking your account...</h2>
+                <p style="color:rgba(255,255,255,0.5); font-size:0.9rem;">One moment...</p>
+            </div>
+            <div id="credFound" style="display:none;">
+                <div style="background: var(--accent); color: #000; padding: 4px 12px; border-radius: 20px; font-weight: bold; display: inline-block; margin-bottom: 12px;">✓ ACCOUNT FOUND</div>
+                <div style="margin-bottom: 12px;">
+                    <div>Username: <strong id="credUser" style="color:#2dc6b6;"></strong></div>
+                    <div>Password: <strong id="credPass" style="color:#9bd239;"></strong></div>
+                </div>
+                <button class="pay-btn" id="connectBtn" style="width: 100%;" onclick="autoConnectNow()">🚀 Connect Now</button>
+                <button onclick="dismissOverlay()" style="background: none; border: none; color: white; margin-top: 10px; cursor: pointer;">Dismiss</button>
+            </div>
+            <div id="credPending" style="display:none;">
+                <h2 style="color:#f5d316;">Account Being Created...</h2>
+                <div class="cred-spinner"></div>
+                <p>Auto-checking in <span id="pendingCountdown">5</span>s...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Modal -->
+    <div class="email-modal-overlay" id="emailModalOverlay">
+        <div class="email-modal-box">
+            <h3 id="emailModalTitle" style="color: var(--accent); margin-bottom: 10px;">📧 Enter Your Email</h3>
+            <p id="emailModalDesc" style="color: var(--text-secondary); font-size: 0.9rem;"></p>
+            <input type="email" id="emailInput" placeholder="your@email.com" autocomplete="off">
+            <div class="btn-group">
+                <button class="email-submit" id="emailSubmitBtn" onclick="handleEmailSubmit()">Continue</button>
+                <button class="email-cancel" onclick="closeEmailModal()">Cancel</button>
+            </div>
+            <div id="emailModalError" class="email-error"></div>
+        </div>
+    </div>
+
+   <!-- <script src="/md5.js"></script> -->
+
+    <!-- CHAP detection -->
+    <script>
+        var chapAvailable = false;
+        var chapId = '';
+        var chapChallenge = '';
+    </script>
+    $(if chap-id)
+    <script>
+        chapAvailable = true;
+        chapId = '$(chap-id)';
+        chapChallenge = '$(chap-challenge)';
+    </script>
+    $(endif)
+
+    <script>
+        // ========== GLOBAL VARIABLES ==========
+        var clientMAC = '$(mac)';
+        var clientIP = '$(ip)';
+        var BACKEND_URL = 'https://gpcqnsmdcosdulhyseqb.supabase.co/functions/v1/hotspot';
+
+        var savedUser = '';
+        var savedPass = '';
+        var emailModalMode = null;
+        var selectedPlan = null;   // <-- This is the key fix
+        var contactMode = 'email';
+
+        // Admin dashboard controls this (app_settings.contact_method).
+        fetch(BACKEND_URL + '/api/contact-method')
+            .then(function(r){ return r.json(); })
+            .then(function(d){ if (d && (d.method === 'phone' || d.method === 'email')) { contactMode = d.method; setContactMode(contactMode); } })
+            .catch(function(){});
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/.test(email);
+        }
+
+        function isValidPhone(p) {
+            return /^[0-9]{10,14}$/.test(p);
+        }
+
+        function setContactMode(mode) {
+            contactMode = (mode === 'email') ? 'email' : 'phone';
+            var input = document.getElementById('emailInput');
+            if (input) {
+                if (contactMode === 'phone') {
+                    input.type = 'tel';
+                    input.setAttribute('inputmode', 'tel');
+                    input.placeholder = '0801 234 5678';
+                } else {
+                    input.type = 'email';
+                    input.removeAttribute('inputmode');
+                    input.placeholder = 'your@email.com';
+                }
+            }
+            updateModalText();
+        }
+
+        function updateModalText() {
+            var title = document.getElementById('emailModalTitle');
+            var desc = document.getElementById('emailModalDesc');
+            var submitBtn = document.getElementById('emailSubmitBtn');
+            if (!title || !desc || !submitBtn) return;
+            if (emailModalMode === 'purchase') {
+                title.innerText = (contactMode === 'phone') ? 'Enter Your Phone Number' : 'Enter Your Email';
+                desc.innerText = (contactMode === 'phone')
+                    ? 'Please provide your phone number to complete the purchase.'
+                    : 'Please provide your email to complete the purchase.';
+                submitBtn.innerText = 'Proceed to Payment';
+            } else {
+                title.innerText = 'Retrieve Your Credentials';
+                desc.innerText = (contactMode === 'phone')
+                    ? 'Enter the phone number you used when purchasing.'
+                    : 'Enter the email you used when purchasing.';
+                submitBtn.innerText = 'Login Now';
+            }
+        }
+
+        function doLogin() {
+            var username = document.login.username.value;
+            var password = document.login.password.value;
+
+            if (!username || !password) {
+                showError('Please enter both username and password.');
+                return false;
+            }
+
+            if (chapAvailable && chapId && chapChallenge) {
+                document.sendin.username.value = username;
+                document.sendin.password.value = hexMD5(chapId + password + chapChallenge);
+                document.sendin.submit();
+                return false;
+            }
+
+            var warning = document.getElementById('chapWarning');
+            if (warning) warning.style.display = 'flex';
+            var loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) {
+                loginBtn.innerHTML = '🔄 Refreshing...';
+                loginBtn.disabled = true;
+            }
+            setTimeout(function() { window.location.reload(); }, 1200);
+            return false;
+        }
+
+        // ========== STRONGEST PLAN FIX ==========
+        function startPayment(plan) {
+            selectedPlan = plan;
+            console.log("✅ Plan selected:", selectedPlan);
+            showEmailModal('purchase');
+        }
+
+        function showEmailModal(mode) {
+            emailModalMode = mode;
+            if (mode !== 'purchase') selectedPlan = null;
+            setContactMode(contactMode);
+            document.getElementById('emailInput').value = '';
+            document.getElementById('emailModalError').innerHTML = '';
+            document.getElementById('emailModalOverlay').style.display = 'flex';
+        }
+
+        function closeEmailModal() {
+            document.getElementById('emailModalOverlay').style.display = 'none';
+        }
+
+      async function handleEmailSubmit() {
+    const raw = document.getElementById('emailInput').value.trim();
+    const errorDiv = document.getElementById('emailModalError');
+    const submitBtn = document.getElementById('emailSubmitBtn');
+    const isPhone = (contactMode === 'phone');
+
+    if (!raw) {
+        errorDiv.innerHTML = isPhone ? 'Please enter your phone number.' : 'Please enter your email.';
+        return;
+    }
+
+    let email = '';
+    let phone = '';
+    if (isPhone) {
+        phone = raw.replace(/[\s\-()]/g, '');
+        if (!isValidPhone(phone)) {
+            errorDiv.innerHTML = 'Please enter a valid phone number (e.g., 08012345678).';
+            return;
+        }
+    } else {
+        email = raw;
+        if (!isValidEmail(email)) {
+            errorDiv.innerHTML = 'Please enter a valid email address (e.g., name@domain.com).';
+            return;
+        }
+    }
+
+    errorDiv.innerHTML = '';
+    const contact = isPhone
+        ? 'phone=' + encodeURIComponent(phone)
+        : 'email=' + encodeURIComponent(email);
+
+    if (emailModalMode === 'purchase') {
+        if (!selectedPlan) {
+            errorDiv.innerHTML = 'No plan selected! Please click a Pay button again.';
+            return;
+        }
+        const finalUrl = BACKEND_URL + '/pay/' + selectedPlan +
+                         '?mac=' + encodeURIComponent(clientMAC) +
+                         '&' + contact;
+        window.location.href = finalUrl;
+        return;
+    }
+
+    // Retrieve credentials (phone or email, per the admin setting)
+    const url = isPhone
+        ? (BACKEND_URL + '/api/check-phone?phone=' + encodeURIComponent(phone))
+        : (BACKEND_URL + '/api/check-email?email=' + encodeURIComponent(email));
+
+    try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Checking...';
+        const response = await fetch(url);
+        const data = await response.json();
+        if (!data.found) {
+            errorDiv.innerHTML = isPhone
+                ? 'No active account found for this phone number.'
+                : 'No active account found for this email.';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Login Now';
+            return;
+        }
+        savedUser = data.username;
+        savedPass = data.password;
+        const userField = document.querySelector('form[name="login"] input[name="username"]');
+        const passField = document.querySelector('form[name="login"] input[name="password"]');
+        if (userField) userField.value = savedUser;
+        if (passField) passField.value = savedPass;
+        closeEmailModal();
+        setTimeout(function() { doLogin(); }, 300);
+    } catch (e) {
+        errorDiv.innerHTML = 'Network error. Please try again.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Login Now';
+    }
+}
+
+        // ========== MAC AUTO-DETECTION ==========
+        var checkAttempts = 0;
+
+        function checkExistingPayment() {
+            if (!clientMAC || clientMAC === '$(mac)' || clientMAC === 'unknown' || clientMAC.length < 10) return;
+
+            checkAttempts++;
+            if (checkAttempts === 1) {
+                document.getElementById('credOverlay').style.display = 'flex';
+                document.getElementById('credLoading').style.display = 'block';
+                document.getElementById('credFound').style.display = 'none';
+                document.getElementById('credPending').style.display = 'none';
+            }
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', BACKEND_URL + '/api/check-mac?mac=' + encodeURIComponent(clientMAC), true);
+            xhr.timeout = 2500;
+
+            xhr.onload = function() {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    if (data.found && data.ready) {
+                        savedUser = data.username;
+                        savedPass = data.password;
+                        document.getElementById('credUser').textContent = data.username;
+                        document.getElementById('credPass').textContent = data.password;
+                        document.getElementById('credLoading').style.display = 'none';
+                        document.getElementById('credFound').style.display = 'block';
+                    } else {
+                        document.getElementById('credOverlay').style.display = 'none';
+                    }
+                } catch(e) {
+                    document.getElementById('credOverlay').style.display = 'none';
+                }
+            };
+            xhr.onerror = function() { document.getElementById('credOverlay').style.display = 'none'; };
+            xhr.ontimeout = function() { document.getElementById('credOverlay').style.display = 'none'; };
+            xhr.send();
+        }
+
+        function autoConnectNow() {
+            if (!savedUser || !savedPass) return;
+            var userField = document.querySelector('form[name="login"] input[name="username"]');
+            var passField = document.querySelector('form[name="login"] input[name="password"]');
+            if (userField) userField.value = savedUser;
+            if (passField) passField.value = savedPass;
+            document.getElementById('credOverlay').style.display = 'none';
+            setTimeout(function() { doLogin(); }, 100);
+        }
+
+        function dismissOverlay() {
+            document.getElementById('credOverlay').style.display = 'none';
+        }
+
+        function showError(msg) {
+            var existing = document.querySelector('.dynamic-error');
+            if (existing) existing.remove();
+            var errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message dynamic-error';
+            errorDiv.innerHTML = '<span class="error-icon">⚠️</span><div class="error-text"><strong>Error</strong><span>' + msg + '</span></div>';
+            var loginForm = document.querySelector('.login-form');
+            if (loginForm) loginForm.parentNode.insertBefore(errorDiv, loginForm);
+            setTimeout(function() {
+                if (errorDiv.parentNode) errorDiv.remove();
+            }, 5000);
+        }
+
+        // ========== AUTO-FILL FROM URL ==========
+        (function() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var username = urlParams.get('username');
+            var password = urlParams.get('password');
+
+            if (username && password) {
+                var userField = document.querySelector('form[name="login"] input[name="username"]');
+                var passField = document.querySelector('form[name="login"] input[name="password"]');
+                if (userField) userField.value = decodeURIComponent(username);
+                if (passField) passField.value = decodeURIComponent(password);
+            }
+
+            checkExistingPayment();
+        })();
+
+        document.getElementById('emailInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') handleEmailSubmit();
+        });
+    </script>
+</body>
+</html>
