@@ -20,7 +20,7 @@
 } on-error={}
 :local fetchOk false
 :do {
-    /tool fetch url=("$expireUrl\?api_key=$apiKey") mode=https dst-path=expired.txt
+    /tool fetch url=("$expireUrl\?api_key=$apiKey") mode=https check-certificate=no dst-path=expired.txt
     :delay 5s
     :set fetchOk true
 } on-error={
@@ -69,7 +69,7 @@
                     :log warning ("GUMSUMI-EXP: removed expired " . $username)
                 }
                 :do {
-                    /tool fetch url=("$markUrl/$rid\?api_key=$apiKey") mode=https http-method=post keep-result=no
+                    /tool fetch url=("$markUrl/$rid\?api_key=$apiKey") mode=https check-certificate=no http-method=post keep-result=no
                 } on-error={
                     :log warning ("GUMSUMI-EXP: failed to mark " . $rid)
                 }

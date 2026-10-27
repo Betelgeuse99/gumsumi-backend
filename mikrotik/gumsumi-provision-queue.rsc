@@ -1,9 +1,8 @@
 # =====================================================================
 # Gumsumi International Concept - Hotspot queue provisioner
 # ---------------------------------------------------------------------
-# Polls the backend, creates MikroTik hotspot users for paid orders, and
-# applies the per-plan DATA allowance (GB) as limit-bytes-total (a single
-# up+down quota, matching the GB shown on the customer plan cards).
+# Polls the backend and creates MikroTik hotspot users for paid orders.
+# Plans are TIME-BASED ONLY - no data caps, no limit-bytes-* is ever set.
 # Schedule it every 15s (matches Sultanate's payment-check cadence):
 #   /system scheduler add name="gumsumi-provision" interval=15s \
 #       on-event="/system script run gumsumi-provision"
@@ -70,15 +69,6 @@
             :local expISO   [:pick $ln ($p4 + 1) $p5]
             :local rid      [:pick $ln ($p5 + 1) [:len $ln]]
 
-            # ---- plan -> data allowance (GB) ----
-            :local gb 4
-            :if ($plan = "3d")  do={ :set gb 11 }
-            :if ($plan = "5d")  do={ :set gb 19 }
-            :if ($plan = "7d")  do={ :set gb 26 }
-            :if ($plan = "14d") do={ :set gb 50 }
-            :if ($plan = "30d") do={ :set gb 100 }
-            :local bytes ($gb * 1073741824)
-
             :if ([:len $username] > 0) do={
             :if ([:len $rid] > 0) do={
                 # ---- readable expiry comment (WAT = UTC+1) ----
@@ -107,7 +97,7 @@
                 :if ($expDay < 10) do={ :set dStr ("0" . $expDay) }
                 :local mStr [:tostr $expMon]
                 :if ($expMon < 10) do={ :set mStr ("0" . $expMon) }
-                :local tag ("ALM|" . $plan . "|" . $expYear . "-" . $mStr . "-" . $dStr . "|" . $hStr . ":" . $utcMin)
+                :local tag ("GSM|" . $plan . "|" . $expYear . "-" . $mStr . "-" . $dStr . "|" . $hStr . ":" . $utcMin)
 
                 :local existing [/ip hotspot user find where name=$username]
                 :local done false
@@ -118,14 +108,12 @@
                     :do {
                         :if (([:len $mac] > 10) and ($mac != "none") and ($mac != "unknown") and ($mac != "00:00:00:00:00:00")) do={
                             /ip hotspot user add name=$username password=$password server=$hotspotServer \
-                                profile=$plan mac-address=$mac \
-                                limit-bytes-total=$bytes comment=$tag
-                            :log warning ("GUMSUMI-PROV: CREATED " . $username . " | " . $gb . "GB total | MAC:" . $mac)
+                                profile=$plan mac-address=$mac comment=$tag
+                            :log warning ("GUMSUMI-PROV: CREATED " . $username . " | " . $plan . " | MAC:" . $mac)
                         } else={
                             /ip hotspot user add name=$username password=$password server=$hotspotServer \
-                                profile=$plan \
-                                limit-bytes-total=$bytes comment=$tag
-                            :log warning ("GUMSUMI-PROV: CREATED " . $username . " | " . $gb . "GB total | no-MAC")
+                                profile=$plan comment=$tag
+                            :log warning ("GUMSUMI-PROV: CREATED " . $username . " | " . $plan . " | no-MAC")
                         }
                         :set done true
                     } on-error={
@@ -135,7 +123,7 @@
                 :if ($done) do={
                     :set createdCount ($createdCount + 1)
                     :do {
-                        /tool fetch url=("$markUrl/$rid\?api_key=$apiKey") mode=https http-method=post keep-result=no
+                        /tool fetch url=("$markUrl/$rid\?api_key=$apiKey") mode=https check-certificate=no http-method=post keep-result=no
                         :log info ("GUMSUMI-PROV: Marked " . $rid . " processed")
                     } on-error={
                         :log warning ("GUMSUMI-PROV: Failed to mark " . $rid . " processed")
