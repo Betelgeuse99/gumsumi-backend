@@ -6,11 +6,11 @@
 
 export const PLAN_PRICES: Record<string, number> = {
   "24hr": 200,
-  "3d": 600,
+  "3d": 500,
   "5d": 800,
-  "7d": 1500,
-  "14d": 2500,
-  "30d": 5000,
+  "7d": 1200,
+  "14d": 2000,
+  "30d": 4000,
 };
 
 export interface RevenueRow {

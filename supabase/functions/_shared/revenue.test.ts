@@ -7,13 +7,13 @@ import {
   sumRevenue,
 } from "./revenue.ts";
 
-Deno.test("priceOf uses the Alimu plan prices", () => {
+Deno.test("priceOf uses the Gumsumi plan prices", () => {
   assertEquals(priceOf("24hr"), 200);
-  assertEquals(priceOf("3d"), 600);
-  assertEquals(priceOf("5d"), 1000);
-  assertEquals(priceOf("7d"), 1400);
-  assertEquals(priceOf("14d"), 2500);
-  assertEquals(priceOf("30d"), 5000);
+  assertEquals(priceOf("3d"), 500);
+  assertEquals(priceOf("5d"), 800);
+  assertEquals(priceOf("7d"), 1200);
+  assertEquals(priceOf("14d"), 2000);
+  assertEquals(priceOf("30d"), 4000);
   assertEquals(priceOf("6h"), 0);
   assertEquals(priceOf("default"), 0);
 });

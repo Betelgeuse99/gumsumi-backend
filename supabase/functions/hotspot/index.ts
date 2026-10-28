@@ -48,20 +48,20 @@ const SUCCESS_PAGE = Deno.env.get("SUCCESS_PAGE_URL") || "http://192.168.88.1/lo
 
 const planConfig: Record<string, { amount: number; code: string; duration: string; label: string }> = {
   daily: { amount: 200, code: "24hr", duration: "24 Hours", label: "Daily" },
-  "3day": { amount: 600, code: "3d", duration: "3 Days", label: "3-Day" },
+  "3day": { amount: 500, code: "3d", duration: "3 Days", label: "3-Day" },
   "5day": { amount: 800, code: "5d", duration: "5 Days", label: "5-Day" },
-  weekly: { amount: 1500, code: "7d", duration: "7 Days", label: "Weekly" },
-  "2week": { amount: 2500, code: "14d", duration: "14 Days", label: "2-Week" },
-  monthly: { amount: 5000, code: "30d", duration: "30 Days", label: "Monthly" },
+  weekly: { amount: 1200, code: "7d", duration: "7 Days", label: "Weekly" },
+  "2week": { amount: 2000, code: "14d", duration: "14 Days", label: "2-Week" },
+  monthly: { amount: 4000, code: "30d", duration: "30 Days", label: "Monthly" },
 };
 
 const amountToPlan: Record<number, string> = {
   200: "24hr",
-  600: "3d",
+  500: "3d",
   800: "5d",
-  1500: "7d",
-  2500: "14d",
-  5000: "30d",
+  1200: "7d",
+  2000: "14d",
+  4000: "30d",
 };
 
 // ---------- helpers ----------
@@ -324,19 +324,19 @@ async function initPayment(args: { email?: string; phone?: string; amount: numbe
 }
 
 // ---------- queue insertion ----------
-// Username: ALM + 5 digits. It MUST be unique — the router treats an existing
+// Username: GIC + 5 digits. It MUST be unique — the router treats an existing
 // username as "already provisioned", so a collision would silently mark a
 // paying customer's order processed with no account. Check the DB and retry.
 async function uniqueUsername(): Promise<string> {
   const supabase = getSupabase();
   for (let i = 0; i < 8; i++) {
     const digits = String(crypto.getRandomValues(new Uint32Array(1))[0] % 100000).padStart(5, "0");
-    const candidate = `ALM${digits}`;
+    const candidate = `GIC${digits}`;
     const { data } = await supabase.from("payment_queue")
       .select("id").eq("mikrotik_username", candidate).limit(1);
     if (!data || data.length === 0) return candidate;
   }
-  return `ALM${Date.now().toString().slice(-5)}${hex(randBytes(1)).toUpperCase()}`;
+  return `GIC${Date.now().toString().slice(-5)}${hex(randBytes(1)).toUpperCase()}`;
 }
 
 async function enqueue(
@@ -456,14 +456,23 @@ async function mikrotikQueueText(): Promise<Response> {
     .order("created_at", { ascending: true })
     .limit(5);
   if (error || !data || data.length === 0) return text("");
-  const lines = data.map((r) => [
-    r.mikrotik_username || "",
-    r.mikrotik_password || "",
-    r.plan || "",
-    "00:00:00:00:00:00",
-    r.expires_at ? new Date(r.expires_at).toISOString() : "",
-    r.id,
-  ].join("|"));
+  const lines = data.map((r) => {
+    // Send the real device MAC so the router binds the account to the paying
+    // device. Fall back to the all-zero MAC only when we genuinely have none
+    // (the provision script then creates a login-only user).
+    const mac = String(r.mac_address || "").toUpperCase();
+    const usableMac = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(mac) && mac !== "00:00:00:00:00:00"
+      ? mac
+      : "00:00:00:00:00:00";
+    return [
+      r.mikrotik_username || "",
+      r.mikrotik_password || "",
+      r.plan || "",
+      usableMac,
+      r.expires_at ? new Date(r.expires_at).toISOString() : "",
+      r.id,
+    ].join("|");
+  });
   await logActivity("mikrotik", `✒️ Preparing ${data.length} users for MikroTik`, { level: "mikrotik" });
   return text(lines.join("\n"));
 }
@@ -472,15 +481,25 @@ async function markProcessed(idRaw: string): Promise<Response> {
   const id = parseInt((idRaw || "").split("|").pop() || "", 10);
   if (isNaN(id)) return json({ success: false, error: "Invalid ID" }, 400);
   await logActivity("mikrotik", `⌛ Processing mark-processed for: ${id}`, { level: "mikrotik" });
-  const { data, error } = await getSupabase()
+  const supabase = getSupabase();
+  // Restart the plan clock at provisioning time, not payment time, so a
+  // customer never loses paid time while an order waits in the queue.
+  const { data: row } = await supabase
+    .from("payment_queue").select("plan").eq("id", id).maybeSingle();
+  const patch: Record<string, unknown> = {
+    status: "processed",
+    processed_at: new Date().toISOString(),
+  };
+  if (row?.plan) patch.expires_at = expiryFromPlan(String(row.plan)).toISOString();
+  const { data, error } = await supabase
     .from("payment_queue")
-    .update({ status: "processed", processed_at: new Date().toISOString() })
+    .update(patch)
     .eq("id", id)
     .select("id");
   if (error) return json({ success: false, error: error.message }, 500);
   if (!data || data.length === 0) return json({ success: false, error: "User not found" }, 404);
   await logActivity("mikrotik", `✅ Successfully marked ${id} as processed`, { level: "mikrotik" });
-  return json({ success: true, id });
+  return json({ success: true, id, expires_at: patch.expires_at ?? null });
 }
 
 async function expiredUsers(): Promise<Response> {

@@ -92,11 +92,11 @@ function escapeHtml(text) {
 // ------------------------------------------------------------
 const planConfig = {
   daily:   { amount: 200, code: '24hr', duration: '24 Hours' },
-  '3day':  { amount: 600, code: '3d', duration: '3 Days' },
+  '3day':  { amount: 500, code: '3d', duration: '3 Days' },
   '5day':  { amount: 800, code: '5d', duration: '5 Days' },
-  weekly:  { amount: 1500, code: '7d', duration: '7 Days' },
-  '2week': { amount: 2500, code: '14d', duration: '14 Days' },
-  monthly: { amount: 5000, code: '30d', duration: '30 Days' }
+  weekly:  { amount: 1200, code: '7d', duration: '7 Days' },
+  '2week': { amount: 2000, code: '14d', duration: '14 Days' },
+  monthly: { amount: 4000, code: '30d', duration: '30 Days' }
 };
 
 // ------------------------------------------------------------
@@ -247,7 +247,7 @@ app.post('/api/squad-webhook', async (req, res) => {
     let plan = meta?.plan;
 
     if (!plan) {
-      const planMap = { 200: '24hr', 600: '3d', 800: '5d', 1500: '7d', 2500: '14d', 5000: '30d' };
+      const planMap = { 200: '24hr', 500: '3d', 800: '5d', 1200: '7d', 2000: '14d', 4000: '30d' };
       plan = planMap[amountNaira];
       if (!plan) {
         console.error('❌ Invalid amount:', amountNaira);
@@ -1227,8 +1227,8 @@ app.get('/admin/api/daily', async (req, res) => {
             SELECT 
                 EXTRACT(DAY FROM created_at) as day,
                 SUM(CASE plan
-                    WHEN '24hr' THEN 200 WHEN '3d' THEN 600 WHEN '5d' THEN 800
-                    WHEN '7d' THEN 1500 WHEN '14d' THEN 2500 WHEN '30d' THEN 5000 ELSE 0 END
+                    WHEN '24hr' THEN 200 WHEN '3d' THEN 500 WHEN '5d' THEN 800
+                    WHEN '7d' THEN 1200 WHEN '14d' THEN 2000 WHEN '30d' THEN 4000 ELSE 0 END
                 ) as daily_total,
                 COUNT(*) as signups_count
             FROM payment_queue
@@ -1362,10 +1362,10 @@ async function handleAdminDashboard(req, res, sessionId) {
                 FROM payment_queue
             ),
             revenue_stats AS (
-                SELECT COALESCE(SUM(CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 600 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1500 WHEN plan = '14d' THEN 2500 WHEN plan = '30d' THEN 5000 ELSE 0 END),0) as total_revenue_lifetime,
-                       COALESCE(SUM(CASE WHEN created_at::date = CURRENT_DATE THEN CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 600 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1500 WHEN plan = '14d' THEN 2500 WHEN plan = '30d' THEN 5000 ELSE 0 END ELSE 0 END),0) as revenue_today,
-                       COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 600 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1500 WHEN plan = '14d' THEN 2500 WHEN plan = '30d' THEN 5000 END ELSE 0 END),0) as revenue_week,
-                       COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '30 days' THEN CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 600 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1500 WHEN plan = '14d' THEN 2500 WHEN plan = '30d' THEN 5000 END ELSE 0 END),0) as revenue_month
+                SELECT COALESCE(SUM(CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 500 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1200 WHEN plan = '14d' THEN 2000 WHEN plan = '30d' THEN 4000 ELSE 0 END),0) as total_revenue_lifetime,
+                       COALESCE(SUM(CASE WHEN created_at::date = CURRENT_DATE THEN CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 500 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1200 WHEN plan = '14d' THEN 2000 WHEN plan = '30d' THEN 4000 ELSE 0 END ELSE 0 END),0) as revenue_today,
+                       COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 500 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1200 WHEN plan = '14d' THEN 2000 WHEN plan = '30d' THEN 4000 END ELSE 0 END),0) as revenue_week,
+                       COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '30 days' THEN CASE WHEN plan = '24hr' THEN 200 WHEN plan = '3d' THEN 500 WHEN plan = '5d' THEN 800 WHEN plan = '7d' THEN 1200 WHEN plan = '14d' THEN 2000 WHEN plan = '30d' THEN 4000 END ELSE 0 END),0) as revenue_month
                 FROM payment_queue
             )
             SELECT u.*, r.* FROM user_stats u, revenue_stats r
@@ -1383,7 +1383,7 @@ async function handleAdminDashboard(req, res, sessionId) {
         const monthlyRevenue = await pool.query(`
             WITH months AS (
                 SELECT DATE_TRUNC('month', created_at) as month_start,
-                       SUM(CASE plan WHEN '24hr' THEN 200 WHEN '3d' THEN 600 WHEN '5d' THEN 800 WHEN '7d' THEN 1500 WHEN '14d' THEN 2500 WHEN '30d' THEN 5000 ELSE 0 END) as total
+                       SUM(CASE plan WHEN '24hr' THEN 200 WHEN '3d' THEN 500 WHEN '5d' THEN 800 WHEN '7d' THEN 1200 WHEN '14d' THEN 2000 WHEN '30d' THEN 4000 ELSE 0 END) as total
                 FROM payment_queue WHERE created_at >= NOW() - INTERVAL '12 months' GROUP BY DATE_TRUNC('month', created_at)
                 ORDER BY month_start DESC
             )
