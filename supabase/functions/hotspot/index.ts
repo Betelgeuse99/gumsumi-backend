@@ -456,23 +456,17 @@ async function mikrotikQueueText(): Promise<Response> {
     .order("created_at", { ascending: true })
     .limit(5);
   if (error || !data || data.length === 0) return text("");
-  const lines = data.map((r) => {
-    // Send the real device MAC so the router binds the account to the paying
-    // device. Fall back to the all-zero MAC only when we genuinely have none
-    // (the provision script then creates a login-only user).
-    const mac = String(r.mac_address || "").toUpperCase();
-    const usableMac = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(mac) && mac !== "00:00:00:00:00:00"
-      ? mac
-      : "00:00:00:00:00:00";
-    return [
-      r.mikrotik_username || "",
-      r.mikrotik_password || "",
-      r.plan || "",
-      usableMac,
-      r.expires_at ? new Date(r.expires_at).toISOString() : "",
-      r.id,
-    ].join("|");
-  });
+  // Deliberate: always hand the router an all-zero MAC so accounts are
+  // login-only (owner decision 2026-10-28). The real device MAC is still kept in
+  // payment_queue for portal lookup; do NOT send it as a hotspot user mac-address.
+  const lines = data.map((r) => [
+    r.mikrotik_username || "",
+    r.mikrotik_password || "",
+    r.plan || "",
+    "00:00:00:00:00:00",
+    r.expires_at ? new Date(r.expires_at).toISOString() : "",
+    r.id,
+  ].join("|"));
   await logActivity("mikrotik", `✒️ Preparing ${data.length} users for MikroTik`, { level: "mikrotik" });
   return text(lines.join("\n"));
 }
@@ -1053,6 +1047,25 @@ serve(async (req: Request) => {
       try {
         const body = JSON.parse(raw);
         const { Event, Body } = body || {};
+        const subMeta = (Body?.meta as Record<string, unknown>) || {};
+        // Licence/subscription payments run on the SAME Squad account and the
+        // same single webhook. Route them here before WiFi plan mapping —
+        // otherwise a ₦5,000 licence payment would be treated as a 30-day
+        // WiFi plan. Wallet payments have no meta.kind and fall through.
+        if (subMeta.kind === "subscription") {
+          if (subMeta.site && subMeta.site !== SITE_ID) return json({ received: true });
+          if (Event === "charge_successful" && Body &&
+              String(Body.transaction_status || "").toLowerCase() === "success") {
+            await applySubscriptionPayment(
+              Body.transaction_ref,
+              Number(Body.amount) || 0,
+              Body?.payment_information?.token_id || null,
+              Body.email || null,
+              Body,
+            );
+          }
+          return json({ received: true });
+        }
         if (Event !== "charge_successful" || !Body ||
             String(Body.transaction_status || "").toLowerCase() !== "success") {
           return json({ received: true });
