@@ -202,7 +202,13 @@ export async function handleAdmin(req: Request, path: string): Promise<Response>
     if (error) return json({ error: error.message }, 500);
     const rows = await fetchRevenueRows(sb);
     const map = revenueByDay(rows, month);
-    const out = (data ?? []).map((r: any) => ({ ...r, daily_total: map[Number(r.day)] ?? 0 }));
+    // Alimu's admin_daily returns signups_count; Gumsumi's SQL function returns
+    // signups. Normalise to the Alimu contract so the shared dashboard works.
+    const out = (data ?? []).map((r: any) => ({
+      ...r,
+      signups_count: r.signups_count ?? r.signups ?? 0,
+      daily_total: map[Number(r.day)] ?? 0,
+    }));
     return json({ success: true, data: out, month });
   }
 
